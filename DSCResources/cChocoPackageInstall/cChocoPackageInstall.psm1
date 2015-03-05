@@ -21,17 +21,7 @@ function Get-TargetResource
         Name = $Name
     }
 
-    if (-not (IsPackageInstalled $Name))
-    {
-        $Configuration.Ensure = "Absent"
-        Return $Configuration
-    }
-    else
-    {
-        $Configuration.Ensure = "Present"
-        Return $Configuration
-
-    }
+    return $Configuration
 }
 
 function Set-TargetResource
