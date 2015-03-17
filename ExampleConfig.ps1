@@ -1,7 +1,6 @@
-Configuration myChocoConfig
+﻿Configuration myChocoConfig
 {
    Import-DscResource -Module cChoco  
-   Import-DscResource -Module cGit  
    Node "localhost"
    {
       LocalConfigurationManager
@@ -13,18 +12,10 @@ Configuration myChocoConfig
       {
         InstallDir = "c:\choco"
       }
-      cChocoPackageInstaller installGit
+      cChocoPackageInstaller installChrome
       {
-        Name = "git.install"
+        Name = "google-chrome-x64"
         DependsOn = "[cChocoInstaller]installChoco"
-      }
-      cGitPull pullRepo
-      {
-        Name = 'test'
-        RepositoryLocal = "c:\temp\gitdsc\"
-        RepositoryRemote = 'https://github.com/lawrencegripper/FluentMongoIntegrationTesting'
-        LocationOfGitExe = "C:\Program Files (x86)\Git\bin\git.exe"
-        DependsOn = "[cChocoPackageInstaller]installGit"
       }
       
    }

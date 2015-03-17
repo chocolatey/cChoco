@@ -85,9 +85,9 @@ function InstallPackage
 
     $env:Path = [System.Environment]::GetEnvironmentVariable('Path','Machine')
 
-    $packageInstallOuput = choco install $pName
+    $packageInstallOuput = choco install $pName -y
     
-    Write-Verbose "package output $packageInstallOuput"
+    Write-Verbose "package output $packageInstallOuput "
 
     #refresh path varaible in powershell, as choco doesn"t, to pull in git
     $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine")
