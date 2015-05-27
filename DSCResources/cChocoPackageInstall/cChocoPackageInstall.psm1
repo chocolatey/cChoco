@@ -7,7 +7,15 @@ function Get-TargetResource
         [parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
         [System.String]
-        $Name
+        $Name,
+        [parameter(Mandatory = $false)]
+        [ValidateNotNullOrEmpty()]
+        [System.String]
+        $Params,    
+        [parameter(Mandatory = $false)]
+        [ValidateNotNullOrEmpty()]
+        [System.String]
+        $Version
 
     )
 
@@ -19,6 +27,8 @@ function Get-TargetResource
     #status of the configuration component
     $Configuration = @{
         Name = $Name
+        Params = $Params
+        Version = $Version
     }
 
     return $Configuration
@@ -32,7 +42,16 @@ function Set-TargetResource
         [parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
         [System.String]
-        $Name
+        $Name,   
+        [parameter(Mandatory = $false)]
+        [ValidateNotNullOrEmpty()]
+        [System.String]
+        $Params,    
+        [parameter(Mandatory = $false)]
+        [ValidateNotNullOrEmpty()]
+        [System.String]
+        $Version     
+
     )
     Write-Verbose "Start Set-TargetResource"
 
@@ -40,7 +59,7 @@ function Set-TargetResource
 
     if (-not (IsPackageInstalled $Name))
     {
-        InstallPackage $Name
+        InstallPackage -pName $Name -pParams $Params -pVersion $Version
     }
 }
 
@@ -53,7 +72,15 @@ function Test-TargetResource
         [parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
         [System.String]
-        $Name
+        $Name,
+        [parameter(Mandatory = $false)]
+        [ValidateNotNullOrEmpty()]
+        [System.String]
+        $Params,    
+        [parameter(Mandatory = $false)]
+        [ValidateNotNullOrEmpty()]
+        [System.String]
+        $Version
     )
 
     Write-Verbose "Start Test-TargetResource"
@@ -80,12 +107,30 @@ function CheckChocoInstalled
 function InstallPackage
 {
     param(
-            [Parameter(Position=0,Mandatory=1)][string]$pName
+            [Parameter(Position=0,Mandatory=1)][string]$pName,
+            [Parameter(Position=1,Mandatory=0)][string]$pParams,
+            [Parameter(Position=2,Mandatory=0)][string]$pVersion
     ) 
 
     $env:Path = [System.Environment]::GetEnvironmentVariable('Path','Machine')
-
-    $packageInstallOuput = choco install $pName -y
+    
+    #Todo: Refactor
+    if ((-not ($pParams)) -and (-not $pVersion))
+    {
+        $packageInstallOuput = choco install $pName -y
+    }
+    elseif ($pParams -and $pVersion)
+    {
+        $packageInstallOuput = choco install $pName --params="$pParams" --version=$pVersion -y        
+    }
+    elseif ($pParams)
+    {
+        $packageInstallOuput = choco install $pName --params="$pParams" -y            
+    }
+    elseif ($pVersion)
+    {
+        $packageInstallOuput = choco install $pName --version=$pVersion -y        
+    }
     
     Write-Verbose "package output $packageInstallOuput "
 

@@ -14,7 +14,13 @@
       }
       cChocoPackageInstaller installChrome
       {
-        Name = "google-chrome-x64"
+        Name = "googlechrome"
+        DependsOn = "[cChocoInstaller]installChoco"
+      }
+      cChocoPackageInstaller installAtomSpecificVersion
+      {
+        Name = "atom"
+        Version = "0.155.0"
         DependsOn = "[cChocoInstaller]installChoco"
       }
       
@@ -23,4 +29,4 @@
 
 myChocoConfig
 
-Start-DscConfiguration .\myChocoConfig -wait -Verbose
+Start-DscConfiguration .\myChocoConfig -wait -Verbose -force
