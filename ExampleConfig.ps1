@@ -5,8 +5,7 @@
    {
       LocalConfigurationManager
       {
-          ConfigurationMode = "ApplyAndAutoCorrect"
-          ConfigurationModeFrequencyMins = 30 #must be a multiple of the RefreshFrequency and how often configuration is checked
+          DebugMode = 'ForceModuleImport'
       }
       cChocoInstaller installChoco
       {
@@ -23,7 +22,12 @@
         Version = "0.155.0"
         DependsOn = "[cChocoInstaller]installChoco"
       }
-      
+      cChocoPackageInstaller installGit
+      {
+         Name = "git"
+         Params = "/Someparam "
+         DependsOn = "[cChocoInstaller]installChoco"
+      }
    }
 } 
 
