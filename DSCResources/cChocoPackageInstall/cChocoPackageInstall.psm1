@@ -117,22 +117,27 @@ function InstallPackage
     #Todo: Refactor
     if ((-not ($pParams)) -and (-not $pVersion))
     {
+        Write-Verbose "Installing Package Standard"
         $packageInstallOuput = choco install $pName -y
     }
     elseif ($pParams -and $pVersion)
     {
+        Write-Verbose "Installing Package with Params and Version"
         $packageInstallOuput = choco install $pName --params="$pParams" --version=$pVersion -y        
     }
     elseif ($pParams)
     {
+        Write-Verbose "Installing Package with params"
         $packageInstallOuput = choco install $pName --params="$pParams" -y            
     }
     elseif ($pVersion)
     {
+        Write-Verbose "Installing Package with version"
         $packageInstallOuput = choco install $pName --version=$pVersion -y        
     }
     
-    Write-Verbose "package output $packageInstallOuput "
+    
+    Write-Verbose "Package output $packageInstallOuput "
 
     #refresh path varaible in powershell, as choco doesn"t, to pull in git
     $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine")
