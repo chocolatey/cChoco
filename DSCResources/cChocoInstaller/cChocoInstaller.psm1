@@ -195,7 +195,7 @@ function global:Write-Host
 # ==============================================================================
 
 # variables
-$url = "http://chocolatey.org/api/v2/package/chocolatey/"
+$url = "https://chocolatey.org/api/v2/package/chocolatey/"
 $chocTempDir = Join-Path $env:TEMP "chocolatey"
 $tempDir = Join-Path $chocTempDir "chocInstall"
 if (![System.IO.Directory]::Exists($tempDir)) {[System.IO.Directory]::CreateDirectory($tempDir)}
@@ -223,10 +223,10 @@ function InstallChoco
     # download 7zip
     Write-verbose "Download 7Zip commandline tool"
     $7zaExe = Join-Path $tempDir '7za.exe'
-    
-    Download-File 'http://chocolatey.org/7za.exe' "$7zaExe"
-    
-    
+
+    Download-File 'https://chocolatey.org/7za.exe' "$7zaExe"
+
+
     # unzip the package
     Write-verbose "Extracting $file to $tempDir..."
     Start-Process "$7zaExe" -ArgumentList "x -o`"$tempDir`" -y `"$file`"" -Wait
