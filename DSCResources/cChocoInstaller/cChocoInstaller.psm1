@@ -196,6 +196,9 @@ function global:Write-Host
 
 # variables
 $url = "http://chocolatey.org/api/v2/package/chocolatey/"
+if ($env:TEMP -eq $null) {
+  $env:TEMP = Join-Path $env:SystemDrive 'temp'
+}
 $chocTempDir = Join-Path $env:TEMP "chocolatey"
 $tempDir = Join-Path $chocTempDir "chocInstall"
 if (![System.IO.Directory]::Exists($tempDir)) {[System.IO.Directory]::CreateDirectory($tempDir)}
@@ -229,7 +232,7 @@ function InstallChoco
     
     # unzip the package
     Write-verbose "Extracting $file to $tempDir..."
-    Start-Process "$7zaExe" -ArgumentList "x -o`"$tempDir`" -y `"$file`"" -Wait
+    Start-Process "$7zaExe" -ArgumentList "x -o`"$tempDir`" -y `"$file`"" -Wait -NoNewWindow
     #$shellApplication = new-object -com shell.application 
     #$zipPackage = $shellApplication.NameSpace($file) 
     #$destinationFolder = $shellApplication.NameSpace($tempDir) 
@@ -279,7 +282,7 @@ function InstallChoco
     write-verbose 'Ensuring chocolatey commands are on the path'
     $chocInstallVariableName = "ChocolateyInstall"
     $chocoPath = [Environment]::GetEnvironmentVariable($chocInstallVariableName, [System.EnvironmentVariableTarget]::User)
-    $chocoExePath = 'C:\Chocolatey\bin'
+    $chocoExePath = 'C:\ProgramData\Chocolatey\bin'
     if ($chocoPath -ne $null) {
       $chocoExePath = Join-Path $chocoPath 'bin'
     }
