@@ -1,6 +1,6 @@
 function Get-TargetResource
 {
-    [CmdletBinding()]
+    [CmdletBinding()] 
     [OutputType([System.Collections.Hashtable])]
     param
     (
@@ -15,8 +15,11 @@ function Get-TargetResource
         [parameter(Mandatory = $false)]
         [ValidateNotNullOrEmpty()]
         [System.String]
-        $Version
-
+        $Version,
+		[parameter(Mandatory = $false)]
+        [ValidateNotNullOrEmpty()]
+        [System.String]
+        $Source
     )
 
     Write-Verbose "Start Get-TargetResource"
@@ -29,6 +32,7 @@ function Get-TargetResource
         Name = $Name
         Params = $Params
         Version = $Version
+		Source = $Source
     }
 
     return $Configuration
@@ -50,14 +54,29 @@ function Set-TargetResource
         [parameter(Mandatory = $false)]
         [ValidateNotNullOrEmpty()]
         [System.String]
-        $Version     
+        $Version,   
+		[parameter(Mandatory = $false)]
+        [ValidateNotNullOrEmpty()]
+        [System.String]
+        $Source
 
     )
     Write-Verbose "Start Set-TargetResource"
-
+	
     CheckChocoInstalled
 
-    if (-not (IsPackageInstalled $Name))
+	if ($Source)
+	{
+		$SourceCmdOutput = choco source remove -n="$Name"
+		$SourceCmdOutput += choco source add -n="$Name" -s="$Source"
+		Write-Verbose "Source command output: $SourceCmdOutput"
+	}
+    	
+	if	( `
+			(-not $Version) -and -not (IsPackageInstalled $Name) `
+			-or `
+			($Version) -and -not (IsPackageInstalled -pName $Name -pVersion $Version) `
+	)
     {
         InstallPackage -pName $Name -pParams $Params -pVersion $Version
     }
@@ -80,14 +99,22 @@ function Test-TargetResource
         [parameter(Mandatory = $false)]
         [ValidateNotNullOrEmpty()]
         [System.String]
-        $Version
+        $Version,
+		[parameter(Mandatory = $false)]
+        [ValidateNotNullOrEmpty()]
+        [System.String]
+        $Source
     )
 
     Write-Verbose "Start Test-TargetResource"
 
     CheckChocoInstalled
 
-    if (-not (IsPackageInstalled $Name))
+	if	( `
+			(-not $Version) -and -not (IsPackageInstalled $Name) `
+			-or `
+			($Version) -and -not (IsPackageInstalled -pName $Name -pVersion $Version) `
+	)
     {
         Return $false
     }
@@ -147,15 +174,19 @@ function InstallPackage
 function IsPackageInstalled
 {
     param(
-            [Parameter(Position=0,Mandatory=1)][string]$pName
+            [Parameter(Position=0,Mandatory=1)][string]$pName,
+            [Parameter(Position=1,Mandatory=0)][string]$pVersion
         ) 
     Write-Verbose "Start IsPackageInstalled $pName"
 
     $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine")
 
-
-    $installedPackages = choco list -lo | Where-object { $_.Contains($pName) }
-
+	if ($pVersion) {
+		$installedPackages = choco list -lo | Where-object { $_.ToLower().Contains($pName.ToLower()) -and $_.ToLower().Contains($pVersion.ToLower()) }
+	} else {
+		$installedPackages = choco list -lo | Where-object { $_.ToLower().Contains($pName.ToLower()) }
+	}
+	
     if ($installedPackages.Count -gt 0)
     {
         return $true
