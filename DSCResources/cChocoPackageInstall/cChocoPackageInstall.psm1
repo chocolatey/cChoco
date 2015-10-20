@@ -11,7 +11,11 @@ function Get-TargetResource
         [parameter(Mandatory = $false)]
         [ValidateNotNullOrEmpty()]
         [System.String]
-        $Params,    
+        $Params, 
+        [parameter(Mandatory = $false)]
+        [ValidateNotNullOrEmpty()]
+        [System.String]
+        $CmdParams,   
         [parameter(Mandatory = $false)]
         [ValidateNotNullOrEmpty()]
         [System.String]
@@ -33,6 +37,7 @@ function Get-TargetResource
         Params = $Params
         Version = $Version
 		Source = $Source
+        CmdParams = $CmdParams
     }
 
     return $Configuration
@@ -50,7 +55,11 @@ function Set-TargetResource
         [parameter(Mandatory = $false)]
         [ValidateNotNullOrEmpty()]
         [System.String]
-        $Params,    
+        $Params,   
+        [parameter(Mandatory = $false)]
+        [ValidateNotNullOrEmpty()]
+        [System.String]
+        $CmdParams,  
         [parameter(Mandatory = $false)]
         [ValidateNotNullOrEmpty()]
         [System.String]
@@ -78,7 +87,7 @@ function Set-TargetResource
 			($Version) -and -not (IsPackageInstalled -pName $Name -pVersion $Version) `
 	)
     {
-        InstallPackage -pName $Name -pParams $Params -pVersion $Version
+        InstallPackage -pName $Name -pParams $Params -pVersion $Version -pCmdParams $CmdParams
     }
 }
 
@@ -95,7 +104,11 @@ function Test-TargetResource
         [parameter(Mandatory = $false)]
         [ValidateNotNullOrEmpty()]
         [System.String]
-        $Params,    
+        $Params, 
+        [parameter(Mandatory = $false)]
+        [ValidateNotNullOrEmpty()]
+        [System.String]
+        $CmdParams,    
         [parameter(Mandatory = $false)]
         [ValidateNotNullOrEmpty()]
         [System.String]
@@ -136,31 +149,32 @@ function InstallPackage
     param(
             [Parameter(Position=0,Mandatory=1)][string]$pName,
             [Parameter(Position=1,Mandatory=0)][string]$pParams,
-            [Parameter(Position=2,Mandatory=0)][string]$pVersion
+            [Parameter(Position=2,Mandatory=0)][string]$pVersion,
+            [Parameter(Position=3,Mandatory=0)][string]$pCmdParams
     ) 
 
     $env:Path = [System.Environment]::GetEnvironmentVariable('Path','Machine')
     
     #Todo: Refactor
-    if ((-not ($pParams)) -and (-not $pVersion))
+    if ((-not ($pParams)) -and (-not $pVersion) -and (-not ($pCmdParams)))
     {
         Write-Verbose "Installing Package Standard"
         $packageInstallOuput = choco install $pName -y
     }
     elseif ($pParams -and $pVersion)
     {
-        Write-Verbose "Installing Package with Params $pParams and Version $pVersion"
-        $packageInstallOuput = choco install $pName --params="$pParams" --version=$pVersion -y        
+        Write-Verbose "Installing Package with Params $pParams and Version $pVersion and CmdParams $pCmdParams"
+        $packageInstallOuput = choco install $pName --params="$pParams" --version=$pVersion -y $pCmdParams       
     }
     elseif ($pParams)
     {
-        Write-Verbose "Installing Package with params $pParams"
-        $packageInstallOuput = choco install $pName --params="$pParams" -y            
+        Write-Verbose "Installing Package with params $pParams and CmdParams $pCmdParams"
+        $packageInstallOuput = choco install $pName --params="$pParams" -y $pCmdParams           
     }
     elseif ($pVersion)
     {
-        Write-Verbose "Installing Package with version $pVersion"
-        $packageInstallOuput = choco install $pName --version=$pVersion -y        
+        Write-Verbose "Installing Package with version $pVersion and CmdParams $pCmdParams"
+        $packageInstallOuput = choco install $pName --version=$pVersion -y $pCmdParams        
     }
     
     

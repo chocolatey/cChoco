@@ -16,6 +16,13 @@
         Name = "googlechrome"
         DependsOn = "[cChocoInstaller]installChoco"
       }
+	  cChocoPackageInstaller libreofficeWithCommandline
+      {
+        Name = "libreoffice"
+        Version = "4.4.3"
+        CmdParams = " --allow-downgrade "
+        DependsOn = "[cChocoInstaller]installChoco"
+      }
       cChocoPackageInstaller installAtomSpecificVersion
       {
         Name = "atom"
