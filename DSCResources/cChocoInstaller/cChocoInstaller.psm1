@@ -250,15 +250,15 @@ function InstallChoco
     Write-verbose 'tools folder:'
     Write-verbose $toolsPath
     Write-verbose 'install folder:' 
-    Write-verbose  $installFolder
-    if ((Test-Path  $installFolder))
+    Write-verbose  '$installFolder'
+    if ((Test-Path  '$installFolder'))
     {
         Write-verbose 'install folder already exists at $installFolder'
     }
     else
     {
         #Write-verbose 'creating install folder at $installFolder'
-        New-Item -ItemType directory -Path $installFolder
+        New-Item -ItemType directory -Path '$installFolder'
     }
     Set-Location $toolsPath
     # ensure module loading preference is on
@@ -269,7 +269,7 @@ function InstallChoco
     remove-module `$moduleName -ErrorAction SilentlyContinue;
     import-module -name  `$psm1File;
     }
-    Initialize-Chocolatey -chocolateyPath $installFolder
+    Initialize-Chocolatey -chocolateyPath '$installFolder'
     "
 
 
