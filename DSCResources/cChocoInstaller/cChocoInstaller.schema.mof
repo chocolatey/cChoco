@@ -2,4 +2,5 @@
 class cChocoInstaller : OMI_BaseResource
 {
 	[Key] string InstallDir;
+	[Key] string SourceUrl;
 };
