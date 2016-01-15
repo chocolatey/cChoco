@@ -195,7 +195,10 @@ function global:Write-Host
 # ==============================================================================
 
 # variables
-$url = "http://chocolatey.org/api/v2/package/chocolatey/"
+$url = "https://chocolatey.org/api/v2/package/chocolatey/"
+if ($env:TEMP -eq $null) {
+  $env:TEMP = Join-Path $env:SystemDrive 'temp'
+}
 $chocTempDir = Join-Path $env:TEMP "chocolatey"
 $tempDir = Join-Path $chocTempDir "chocInstall"
 if (![System.IO.Directory]::Exists($tempDir)) {[System.IO.Directory]::CreateDirectory($tempDir)}
@@ -223,13 +226,13 @@ function InstallChoco
     # download 7zip
     Write-verbose "Download 7Zip commandline tool"
     $7zaExe = Join-Path $tempDir '7za.exe'
-    
-    Download-File 'http://chocolatey.org/7za.exe' "$7zaExe"
-    
-    
+
+    Download-File 'https://chocolatey.org/7za.exe' "$7zaExe"
+
+
     # unzip the package
     Write-verbose "Extracting $file to $tempDir..."
-    Start-Process "$7zaExe" -ArgumentList "x -o`"$tempDir`" -y `"$file`"" -Wait
+    Start-Process "$7zaExe" -ArgumentList "x -o`"$tempDir`" -y `"$file`"" -Wait -NoNewWindow
     #$shellApplication = new-object -com shell.application 
     #$zipPackage = $shellApplication.NameSpace($file) 
     #$destinationFolder = $shellApplication.NameSpace($tempDir) 
@@ -247,15 +250,15 @@ function InstallChoco
     Write-verbose 'tools folder:'
     Write-verbose $toolsPath
     Write-verbose 'install folder:' 
-    Write-verbose  $installFolder
-    if ((Test-Path  $installFolder))
+    Write-verbose  '$installFolder'
+    if ((Test-Path  '$installFolder'))
     {
         Write-verbose 'install folder already exists at $installFolder'
     }
     else
     {
         #Write-verbose 'creating install folder at $installFolder'
-        New-Item -ItemType directory -Path $installFolder
+        New-Item -ItemType directory -Path '$installFolder'
     }
     Set-Location $toolsPath
     # ensure module loading preference is on
@@ -266,7 +269,7 @@ function InstallChoco
     remove-module `$moduleName -ErrorAction SilentlyContinue;
     import-module -name  `$psm1File;
     }
-    Initialize-Chocolatey -chocolateyPath $installFolder
+    Initialize-Chocolatey -chocolateyPath '$installFolder'
     "
 
 
@@ -279,7 +282,7 @@ function InstallChoco
     write-verbose 'Ensuring chocolatey commands are on the path'
     $chocInstallVariableName = "ChocolateyInstall"
     $chocoPath = [Environment]::GetEnvironmentVariable($chocInstallVariableName, [System.EnvironmentVariableTarget]::User)
-    $chocoExePath = 'C:\Chocolatey\bin'
+    $chocoExePath = 'C:\ProgramData\Chocolatey\bin'
     if ($chocoPath -ne $null) {
       $chocoExePath = Join-Path $chocoPath 'bin'
     }
