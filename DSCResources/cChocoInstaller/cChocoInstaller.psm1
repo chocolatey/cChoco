@@ -11,7 +11,7 @@ function Get-TargetResource
         [parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
         [System.String]
-        $SourceUrl = "https://chocolatey.org/install.ps1"
+        $ChocoInstallScriptUrl = "https://chocolatey.org/install.ps1"
 
     )
     Write-Verbose " Start Get-TargetResource"
@@ -21,7 +21,7 @@ function Get-TargetResource
     #status of the configuration component
     $Configuration = @{
         InstallDir = $env:ChocolateyInstall
-        SourceUrl = $SourceUrl
+        ChocoInstallScriptUrl = $ChocoInstallScriptUrl
     }
 
     if (-not (IsChocoInstalled))
@@ -49,7 +49,7 @@ function Set-TargetResource
         [parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
         [System.String]
-        $SourceUrl = "https://chocolatey.org/install.ps1"
+        $ChocoInstallScriptUrl = "https://chocolatey.org/install.ps1"
     )
     Write-Verbose " Start Set-TargetResource"
     
@@ -66,7 +66,7 @@ function Set-TargetResource
         $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine")        
         
         $env:ChocolateyInstall = $InstallDir
-        Download-File $SourceUrl $file
+        Download-File $ChocoInstallScriptUrl $file
         . $file
         
         #InstallChoco $InstallDir
@@ -90,7 +90,7 @@ function Test-TargetResource
         [parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
         [System.String]
-        $SourceUrl = "https://chocolatey.org/install.ps1"
+        $ChocoInstallScriptUrl = "https://chocolatey.org/install.ps1"
     )
 
     Write-Verbose " Start Test-TargetResource"
