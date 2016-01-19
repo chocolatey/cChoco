@@ -8,7 +8,7 @@ function Get-TargetResource
         [ValidateNotNullOrEmpty()]
         [System.String]
         $InstallDir,
-        [parameter(Mandatory = $true)]
+        [parameter(Mandatory = $false)]
         [ValidateNotNullOrEmpty()]
         [System.String]
         $ChocoInstallScriptUrl = "https://chocolatey.org/install.ps1"
@@ -46,7 +46,7 @@ function Set-TargetResource
         [ValidateNotNullOrEmpty()]
         [System.String]
         $InstallDir,
-        [parameter(Mandatory = $true)]
+        [parameter(Mandatory = $false)]
         [ValidateNotNullOrEmpty()]
         [System.String]
         $ChocoInstallScriptUrl = "https://chocolatey.org/install.ps1"
@@ -87,7 +87,7 @@ function Test-TargetResource
         [ValidateNotNullOrEmpty()]
         [System.String]
         $InstallDir,
-        [parameter(Mandatory = $true)]
+        [parameter(Mandatory = $false)]
         [ValidateNotNullOrEmpty()]
         [System.String]
         $ChocoInstallScriptUrl = "https://chocolatey.org/install.ps1"
