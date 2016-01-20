@@ -7,7 +7,12 @@ function Get-TargetResource
         [parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
         [System.String]
-        $InstallDir
+        $InstallDir,
+        [parameter(Mandatory = $false)]
+        [ValidateNotNullOrEmpty()]
+        [System.String]
+        $ChocoInstallScriptUrl = "https://chocolatey.org/install.ps1"
+
     )
     Write-Verbose " Start Get-TargetResource"
 
@@ -15,7 +20,8 @@ function Get-TargetResource
     #Needs to return a hashtable that returns the current
     #status of the configuration component
     $Configuration = @{
-        InstallDir = $InstallDir
+        InstallDir = $env:ChocolateyInstall
+        ChocoInstallScriptUrl = $ChocoInstallScriptUrl
     }
 
     if (-not (IsChocoInstalled))
@@ -39,7 +45,11 @@ function Set-TargetResource
         [parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
         [System.String]
-        $InstallDir
+        $InstallDir,
+        [parameter(Mandatory = $false)]
+        [ValidateNotNullOrEmpty()]
+        [System.String]
+        $ChocoInstallScriptUrl = "https://chocolatey.org/install.ps1"
     )
     Write-Verbose " Start Set-TargetResource"
     
@@ -48,11 +58,22 @@ function Set-TargetResource
         #$env:Path = [System.Environment]::GetEnvironmentVariable('Path','Machine')
 
         Write-Verbose '[ChocoInstaller] Start InstallChoco'
-        InstallChoco $InstallDir
+        If(-not (Test-Path -Path $InstallDir)) {
+            New-Item -Path $InstallDir -ItemType Directory
+        }
+        $file = Join-Path $InstallDir "install.ps1"
+        [Environment]::SetEnvironmentVariable("ChocolateyInstall", $InstallDir)
+        $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine")        
+        
+        $env:ChocolateyInstall = $InstallDir
+        Download-File $ChocoInstallScriptUrl $file
+        . $file
+        
+        #InstallChoco $InstallDir
         Write-Verbose '[ChocoInstaller] Finish InstallChoco'
 
         #refresh path varaible in powershell, as choco doesn"t, to pull in git
-        #$env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine")
+        
     }
 }
 
@@ -65,12 +86,21 @@ function Test-TargetResource
         [parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
         [System.String]
-        $InstallDir
+        $InstallDir,
+        [parameter(Mandatory = $false)]
+        [ValidateNotNullOrEmpty()]
+        [System.String]
+        $ChocoInstallScriptUrl = "https://chocolatey.org/install.ps1"
     )
 
     Write-Verbose " Start Test-TargetResource"
 
     if (-not (IsChocoInstalled))
+    {
+        Return $false
+    }
+    ##Test to see if the Install Directory is right.
+    if(-not ($InstallDir -eq $env:ChocolateyInstall)) 
     {
         Return $false
     }
@@ -174,127 +204,17 @@ function global:Write-Host
     Write-Verbose $Object
 }
 
-## Adapated version of the Chocolatey install script, now using write-verbose
-
-# ==============================================================================
-# 
-# Fervent Coder Copyright 2011 - Present - Released under the Apache 2.0 License
-# 
-# Copyright 2007-2008 The Apache Software Foundation.
-#  
-# Licensed under the Apache License, Version 2.0 (the "License"); you may not use 
-# this file except in compliance with the License. You may obtain a copy of the 
-# License at 
-#
-#     http://www.apache.org/licenses/LICENSE-2.0 
-# 
-# Unless required by applicable law or agreed to in writing, software distributed 
-# under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR 
-# CONDITIONS OF ANY KIND, either express or implied. See the License for the 
-# specific language governing permissions and limitations under the License.
-# ==============================================================================
-
-# variables
-$url = "https://chocolatey.org/api/v2/package/chocolatey/"
-if ($env:TEMP -eq $null) {
-  $env:TEMP = Join-Path $env:SystemDrive 'temp'
-}
-$chocTempDir = Join-Path $env:TEMP "chocolatey"
-$tempDir = Join-Path $chocTempDir "chocInstall"
-if (![System.IO.Directory]::Exists($tempDir)) {[System.IO.Directory]::CreateDirectory($tempDir)}
-$file = Join-Path $tempDir "chocolatey.zip"
-
 function Download-File {
-    param (
-      [string]$url,
-      [string]$file
-     )
-  Write-verbose "Downloading $url to $file"
+param (
+  [string]$url,
+  [string]$file
+ )
+  Write-Output "Downloading $url to $file"
   $downloader = new-object System.Net.WebClient
-  $downloader.Proxy.Credentials=[System.Net.CredentialCache]::DefaultNetworkCredentials;
+
+  $defaultCreds = [System.Net.CredentialCache]::DefaultCredentials
+
   $downloader.DownloadFile($url, $file)
 }
-
-function InstallChoco
-{
-    param (
-            [string]$ChocoInstallDir
-    )
-    # download the package
-    Download-File $url $file
-    
-    # download 7zip
-    Write-verbose "Download 7Zip commandline tool"
-    $7zaExe = Join-Path $tempDir '7za.exe'
-
-    Download-File 'https://chocolatey.org/7za.exe' "$7zaExe"
-
-
-    # unzip the package
-    Write-verbose "Extracting $file to $tempDir..."
-    Start-Process "$7zaExe" -ArgumentList "x -o`"$tempDir`" -y `"$file`"" -Wait -NoNewWindow
-    #$shellApplication = new-object -com shell.application 
-    #$zipPackage = $shellApplication.NameSpace($file) 
-    #$destinationFolder = $shellApplication.NameSpace($tempDir) 
-    #$destinationFolder.CopyHere($zipPackage.Items(),0x10)
-    
-    # call chocolatey install
-    Write-verbose "Installing chocolatey on this machine"
-    $toolsFolder = Join-Path $tempDir "tools"
-    #$chocInstallPS1 = Join-Path $toolsFolder "chocolateyInstall.ps1"
-    
-    $toolsPath = $toolsFolder
-    $installFolder = $ChocoInstallDir
-
-    $scriptBlock =    "Write-verbose 'Choco Install SriptBlock Start'
-    Write-verbose 'tools folder:'
-    Write-verbose $toolsPath
-    Write-verbose 'install folder:' 
-    Write-verbose  '$installFolder'
-    if ((Test-Path  '$installFolder'))
-    {
-        Write-verbose 'install folder already exists at $installFolder'
-    }
-    else
-    {
-        #Write-verbose 'creating install folder at $installFolder'
-        New-Item -ItemType directory -Path '$installFolder'
-    }
-    Set-Location $toolsPath
-    # ensure module loading preference is on
-    `$PSModuleAutoLoadingPreference = 'All'
-    `$modules = Get-ChildItem $toolsPath -Filter *.psm1
-    `$modules | ForEach-Object { `$psm1File = `$_.FullName;
-    `$moduleName = `$([System.IO.Path]::GetFileNameWithoutExtension(`$psm1File))
-    remove-module `$moduleName -ErrorAction SilentlyContinue;
-    import-module -name  `$psm1File;
-    }
-    Initialize-Chocolatey -chocolateyPath '$installFolder'
-    "
-
-
-    #&$scriptBlock $toolsFolder $ChocoInstallDir
-    $installOutput = ExecPowerShellScript $scriptBlock
-    
-    Write-verbose "[choco output]$installOutput"
-
-    
-    write-verbose 'Ensuring chocolatey commands are on the path'
-    $chocInstallVariableName = "ChocolateyInstall"
-    $chocoPath = [Environment]::GetEnvironmentVariable($chocInstallVariableName, [System.EnvironmentVariableTarget]::User)
-    $chocoExePath = 'C:\ProgramData\Chocolatey\bin'
-    if ($chocoPath -ne $null) {
-      $chocoExePath = Join-Path $chocoPath 'bin'
-    }
-    
-    if ($($env:Path).ToLower().Contains($($chocoExePath).ToLower()) -eq $false) {
-      $env:Path = [Environment]::GetEnvironmentVariable('Path',[System.EnvironmentVariableTarget]::Machine);
-    }
-    
-    # update chocolatey to the latest version
-    #Write-verbose "Updating chocolatey to the latest version"
-    #cup chocolatey
-}
-
 
 Export-ModuleMember -Function *-TargetResource
