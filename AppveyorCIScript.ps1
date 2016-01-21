@@ -63,7 +63,7 @@ $env:psmodulepath = $env:psmodulepath + ";" + $ModuleLocation
 Install-Module -Name xDSCResourceDesigner -force
 
 ##Checkout git master branch
-git checkout master | Out-Null
+git checkout master 2>&1
 
 ##Test the resource
 $DSC = Get-DscResource
