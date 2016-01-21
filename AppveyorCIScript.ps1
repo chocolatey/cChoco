@@ -54,6 +54,7 @@ $ModuleName = $env:ModuleName
 $ModuleLocation = $env:APPVEYOR_BUILD_FOLDER
 $PublishingNugetKey = $env:nugetKey
 $Psd1Path = "./$ModuleName.psd1"
+$BuildNumber = $env:APPVEYOR_BUILD_NUMBER
 
 ##Setup
 #Add current directory to ps modules path so module is available 
@@ -125,7 +126,7 @@ $CurrentVersion = [version]$ModuleDefinition.ModuleVersion
 write-host "$CurrentVersion" -ForegroundColor blue -BackgroundColor darkyellow
 
 #Increment the revision number
-$ModuleDefinition.ModuleVersion = (New-Object -TypeName System.Version -ArgumentList $CurrentVersion.Major, $CurrentVersion.Minor, $CurrentVersion.Build, ($version.Revision + 1)).ToString()
+$ModuleDefinition.ModuleVersion = (New-Object -TypeName System.Version -ArgumentList $CurrentVersion.Major, $CurrentVersion.Minor, ($CurrentVersion.Build+1), $BuildNumber).ToString()
 
 write-host "New version: " -NoNewline
 write-host "$($ModuleDefinition.ModuleVersion)" -ForegroundColor blue -BackgroundColor darkyellow
