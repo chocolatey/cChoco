@@ -7,4 +7,4 @@ environment:
     secure: Xk7jTkdE82qskQy9WPZK0zSafSjT6gK1SYxH8m4Aa8muCMQ4ACkkztJ3toh9DFlS
   ModuleName: cChoco
 build_script:
-- ps: . .\cChoco\AppveyorCIScript.ps1
+- ps: . .\AppveyorCIScript.ps1
