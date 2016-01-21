@@ -9,7 +9,7 @@ $ErrorActionPreference = "Stop"
 $ModuleName = $env:ModuleName
 $ModuleLocation = $env:APPVEYOR_BUILD_FOLDER
 $PublishingNugetKey = $env:nugetKey
-$Psd1Path = "./$ModuleName/$ModuleName.psd1"
+$Psd1Path = "./$ModuleName.psd1"
 
 ##Setup
 #Add current directory to ps modules path so module is available 
