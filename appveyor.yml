@@ -1,0 +1,9 @@
+version: 1.0.{build}
+os: WMF 5
+environment:
+  nugetKey:
+    secure: cTU7bDH5E95cI/Zj36CfMrrgnnW/fmEd1S9+cqmBlV3P0GMUnluLcydTWgDK7Usu
+  github_access_token:
+    secure: Xk7jTkdE82qskQy9WPZK0zSafSjT6gK1SYxH8m4Aa8muCMQ4ACkkztJ3toh9DFlS
+build_script:
+- ps: . .\cChoco\AppveyorCIScript.ps1
