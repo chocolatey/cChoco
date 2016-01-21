@@ -62,6 +62,10 @@ $env:psmodulepath = $env:psmodulepath + ";" + $ModuleLocation
 #Install dsc resource designer to make tests available
 Install-Module -Name xDSCResourceDesigner -force
 
+##Checkout git master branch
+#& git checkout master 2>$null
+Start-Process -FilePath git -ArgumentList "checkout master" -Wait -NoNewWindow
+
 ##Test the resource
 $DSC = Get-DscResource
 write-host `n
@@ -158,5 +162,6 @@ git config --global user.name "AutomatedCI Build"
 git config --global push.default simple
 git add $GitUpdatedFile
 git commit -m "Pushed to PSGallery with updated version number: $($ModuleDefinition.ModuleVersion)"
-git push 
+#Workaround for stderror redirect on appveyor causing build error. 
+Start-Process -FilePath git -ArgumentList "push" -Wait -NoNewWindow
 
