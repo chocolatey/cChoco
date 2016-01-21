@@ -1,5 +1,7 @@
 version: 1.0.{build}
 os: WMF 5
+install:
+  - ps: Get-PackageProvider -Name NuGet -Force
 environment:
   nugetKey:
     secure: cTU7bDH5E95cI/Zj36CfMrrgnnW/fmEd1S9+cqmBlV3P0GMUnluLcydTWgDK7Usu
@@ -7,4 +9,4 @@ environment:
     secure: Xk7jTkdE82qskQy9WPZK0zSafSjT6gK1SYxH8m4Aa8muCMQ4ACkkztJ3toh9DFlS
   ModuleName: cChoco
 build_script:
-- ps: . .\cChoco\AppveyorCIScript.ps1
+- ps: . .\AppveyorCIScript.ps1
