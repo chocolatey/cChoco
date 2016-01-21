@@ -81,13 +81,20 @@ $CurrentVersion = [version]$ModuleDefinition.ModuleVersion
 write-host "$CurrentVersion" -ForegroundColor blue -BackgroundColor darkyellow
 
 #Increment the revision number
-$NewVersion = New-Object -TypeName System.Version -ArgumentList $CurrentVersion.Major, $CurrentVersion.Minor, $CurrentVersion.Build, ($CurrentVersion.Revision + 1)
+$ModuleDefinition.ModuleVersion = (New-Object -TypeName System.Version -ArgumentList $CurrentVersion.Major, $CurrentVersion.Minor, $CurrentVersion.Build, ($version.Revision + 1)).ToString()
 
 write-host "New version: " -NoNewline
-write-host "$NewVersion" -ForegroundColor blue -BackgroundColor darkyellow
+write-host "$($ModuleDefinition.ModuleVersion)" -ForegroundColor blue -BackgroundColor darkyellow
 
 #Update the module with the new version
-Update-ModuleManifest -Path $Psd1Path -ModuleVersion $NewVersion
+#Todo - Find out why this isn't working in Appveyor 
+#$NewVersion = New-Object -TypeName System.Version -ArgumentList $CurrentVersion.Major, $CurrentVersion.Minor, $CurrentVersion.Build, ($CurrentVersion.Revision + 1)
+#Update-ModuleManifest -Path $Psd1Path -ModuleVersion $NewVersion
+
+#Workaround for Update-ModuleManifest issue
+#Convert ht back to pson and write out to file
+ConvertTo-PSON $ModuleDefinition -Layers 3 | Set-Content -Path $Psd1Path
+
 
 ##Publish the resource
 write-host `n
