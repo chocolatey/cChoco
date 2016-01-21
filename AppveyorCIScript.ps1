@@ -154,6 +154,7 @@ git config --global credential.helper store
 Add-Content "$env:USERPROFILE\.git-credentials" "https://$($env:github_access_token):x-oauth-basic@github.com`n"
 git config --global user.email "cibuild@withappveyor.com"
 git config --global user.name "AutomatedCI Build"
+git config --global push.default simple
 git add $GitUpdatedFile
 git commit -m "Pushed to PSGallery with updated version number: $($ModuleDefinition.ModuleVersion)"
 git push
