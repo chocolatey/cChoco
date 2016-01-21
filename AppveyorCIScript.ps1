@@ -63,7 +63,7 @@ $env:psmodulepath = $env:psmodulepath + ";" + $ModuleLocation
 Install-Module -Name xDSCResourceDesigner -force
 
 ##Checkout git master branch
-git checkout master
+git checkout master | Out-Null
 
 ##Test the resource
 $DSC = Get-DscResource
@@ -161,5 +161,5 @@ git config --global user.name "AutomatedCI Build"
 git config --global push.default simple
 git add $GitUpdatedFile
 git commit -m "Pushed to PSGallery with updated version number: $($ModuleDefinition.ModuleVersion)"
-git push
+git push 
 
