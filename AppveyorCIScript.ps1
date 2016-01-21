@@ -62,6 +62,9 @@ $env:psmodulepath = $env:psmodulepath + ";" + $ModuleLocation
 #Install dsc resource designer to make tests available
 Install-Module -Name xDSCResourceDesigner -force
 
+##Checkout git master branch
+git checkout master
+
 ##Test the resource
 $DSC = Get-DscResource
 write-host `n
