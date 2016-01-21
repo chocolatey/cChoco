@@ -1,9 +1,53 @@
 $ErrorActionPreference = "Stop"
 
-##For Testing Locally uncommen these
-# $env:APPVEYOR_BUILD_FOLDER = "d:\"
-# $env:nugetKey = "xxxxxxxxxxx"
-# $env:ModuleName = "cChoco-testing"
+##Function used to output PSON - http://stackoverflow.com/questions/15139552/save-hash-table-in-powershell-object-notation-pson
+Function ConvertTo-PSON($Object, [Int]$Depth = 9, [Int]$Layers = 1, [Switch]$Strict, [Version]$Version = $PSVersionTable.PSVersion) {
+    $Format = $Null
+    $Quote = If ($Depth -le 0) {""} Else {""""}
+    $Space = If ($Layers -le 0) {""} Else {" "}
+    If ($Object -eq $Null) {"`$Null"} Else {
+        $Type = "[" + $Object.GetType().Name + "]"
+        $PSON = If ($Object -is "Array") {
+            $Format = "@(", ",$Space", ")"
+            If ($Depth -gt 1) {For ($i = 0; $i -lt $Object.Count; $i++) {ConvertTo-PSON $Object[$i] ($Depth - 1) ($Layers - 1) -Strict:$Strict}}
+        } ElseIf ($Object -is "Xml") {
+            $Type = "[Xml]"
+            $String = New-Object System.IO.StringWriter
+            $Object.Save($String)
+            $Xml = "'" + ([String]$String).Replace("`'", "&apos;") + "'"
+            If ($Layers -le 0) {($Xml -Replace "\r\n\s*", "") -Replace "\s+", " "} ElseIf ($Layers -eq 1) {$Xml} Else {$Xml.Replace("`r`n", "`r`n`t")}
+            $String.Dispose()
+        } ElseIf ($Object -is "DateTime") {
+            "$Quote$($Object.ToString('s'))$Quote"
+        } ElseIf ($Object -is "String") {
+            0..11 | ForEach {$Object = $Object.Replace([String]"```'""`0`a`b`f`n`r`t`v`$"[$_], ('`' + '`''"0abfnrtv$'[$_]))}; "$Quote$Object$Quote"
+        } ElseIf ($Object -is "Boolean") {
+            If ($Object) {"`$True"} Else {"`$False"}
+        } ElseIf ($Object -is "Char") {
+            If ($Strict) {[Int]$Object} Else {"$Quote$Object$Quote"}
+        } ElseIf ($Object -is "ValueType") {
+            $Object
+        } ElseIf ($Object.Keys -ne $Null) {
+            If ($Type -eq "[OrderedDictionary]") {$Type = "[Ordered]"}
+            $Format = "@{", ";$Space", "}"
+            If ($Depth -gt 1) {$Object.GetEnumerator() | ForEach {$_.Name + "$Space=$Space" + (ConvertTo-PSON $_.Value ($Depth - 1) ($Layers - 1) -Strict:$Strict)}}
+        } ElseIf ($Object -is "Object") {
+            If ($Version -le [Version]"2.0") {$Type = "New-Object PSObject -Property "}
+            $Format = "@{", ";$Space", "}"
+            If ($Depth -gt 1) {$Object.PSObject.Properties | ForEach {$_.Name + "$Space=$Space" + (ConvertTo-PSON $_.Value ($Depth - 1) ($Layers - 1) -Strict:$Strict)}}
+        } Else {$Object}
+        If ($Format) {
+            $PSON = $Format[0] + (&{
+                If (($Layers -le 1) -or ($PSON.Count -le 0)) {
+                    $PSON -Join $Format[1]
+                } Else {
+                    ("`r`n" + ($PSON -Join "$($Format[1])`r`n")).Replace("`r`n", "`r`n`t") + "`r`n"
+                }
+            }) + $Format[2]
+        }
+        If ($Strict) {"$Type$PSON"} Else {"$PSON"}
+    }
+} Set-Alias PSON ConvertTo-PSON -Description "Convert variable to PSON"
 
 ##Variables
 $ModuleName = $env:ModuleName
@@ -114,52 +158,3 @@ git add $GitUpdatedFile
 git commit -m "Pushed to PSGallery with updated version number: $($ModuleDefinition.ModuleVersion)"
 git push
 
-##Function used to output PSON - http://stackoverflow.com/questions/15139552/save-hash-table-in-powershell-object-notation-pson
-
-Function ConvertTo-PSON($Object, [Int]$Depth = 9, [Int]$Layers = 1, [Switch]$Strict, [Version]$Version = $PSVersionTable.PSVersion) {
-    $Format = $Null
-    $Quote = If ($Depth -le 0) {""} Else {""""}
-    $Space = If ($Layers -le 0) {""} Else {" "}
-    If ($Object -eq $Null) {"`$Null"} Else {
-        $Type = "[" + $Object.GetType().Name + "]"
-        $PSON = If ($Object -is "Array") {
-            $Format = "@(", ",$Space", ")"
-            If ($Depth -gt 1) {For ($i = 0; $i -lt $Object.Count; $i++) {ConvertTo-PSON $Object[$i] ($Depth - 1) ($Layers - 1) -Strict:$Strict}}
-        } ElseIf ($Object -is "Xml") {
-            $Type = "[Xml]"
-            $String = New-Object System.IO.StringWriter
-            $Object.Save($String)
-            $Xml = "'" + ([String]$String).Replace("`'", "&apos;") + "'"
-            If ($Layers -le 0) {($Xml -Replace "\r\n\s*", "") -Replace "\s+", " "} ElseIf ($Layers -eq 1) {$Xml} Else {$Xml.Replace("`r`n", "`r`n`t")}
-            $String.Dispose()
-        } ElseIf ($Object -is "DateTime") {
-            "$Quote$($Object.ToString('s'))$Quote"
-        } ElseIf ($Object -is "String") {
-            0..11 | ForEach {$Object = $Object.Replace([String]"```'""`0`a`b`f`n`r`t`v`$"[$_], ('`' + '`''"0abfnrtv$'[$_]))}; "$Quote$Object$Quote"
-        } ElseIf ($Object -is "Boolean") {
-            If ($Object) {"`$True"} Else {"`$False"}
-        } ElseIf ($Object -is "Char") {
-            If ($Strict) {[Int]$Object} Else {"$Quote$Object$Quote"}
-        } ElseIf ($Object -is "ValueType") {
-            $Object
-        } ElseIf ($Object.Keys -ne $Null) {
-            If ($Type -eq "[OrderedDictionary]") {$Type = "[Ordered]"}
-            $Format = "@{", ";$Space", "}"
-            If ($Depth -gt 1) {$Object.GetEnumerator() | ForEach {$_.Name + "$Space=$Space" + (ConvertTo-PSON $_.Value ($Depth - 1) ($Layers - 1) -Strict:$Strict)}}
-        } ElseIf ($Object -is "Object") {
-            If ($Version -le [Version]"2.0") {$Type = "New-Object PSObject -Property "}
-            $Format = "@{", ";$Space", "}"
-            If ($Depth -gt 1) {$Object.PSObject.Properties | ForEach {$_.Name + "$Space=$Space" + (ConvertTo-PSON $_.Value ($Depth - 1) ($Layers - 1) -Strict:$Strict)}}
-        } Else {$Object}
-        If ($Format) {
-            $PSON = $Format[0] + (&{
-                If (($Layers -le 1) -or ($PSON.Count -le 0)) {
-                    $PSON -Join $Format[1]
-                } Else {
-                    ("`r`n" + ($PSON -Join "$($Format[1])`r`n")).Replace("`r`n", "`r`n`t") + "`r`n"
-                }
-            }) + $Format[2]
-        }
-        If ($Strict) {"$Type$PSON"} Else {"$PSON"}
-    }
-} Set-Alias PSON ConvertTo-PSON -Description "Convert variable to PSON"
