@@ -62,10 +62,6 @@ $env:psmodulepath = $env:psmodulepath + ";" + $ModuleLocation
 #Install dsc resource designer to make tests available
 Install-Module -Name xDSCResourceDesigner -force
 
-##Checkout git master branch
-#& git checkout master 2>$null
-Start-Process -FilePath git -ArgumentList "checkout master" -Wait -NoNewWindow
-
 ##Test the resource
 $DSC = Get-DscResource
 write-host `n
@@ -111,6 +107,17 @@ foreach ($Resource in ($DSC | ? {$_.Module.Name -eq $ModuleName}))
         exit 1
     }
 }
+
+#If it's a pull request call it a day, we just wanted to run the tests
+if ($env:APPVEYOR_PULL_REQUEST_TITLE)
+{
+    Write-Host "Finished testing of PR: $env:APPVEYOR_PULL_REQUEST_TITLE - Build Ending"
+    exit;
+}
+
+##Checkout git master branch
+#& git checkout master 2>$null
+Start-Process -FilePath git -ArgumentList "checkout master" -Wait -NoNewWindow
 
 #Update the manifest with included DSC Resources
 #Disabled for now as only supported in Powershell5
