@@ -58,12 +58,22 @@ $BuildNumber = $env:APPVEYOR_BUILD_NUMBER
 
 ##Setup
 #Add current directory to ps modules path so module is available 
-$env:psmodulepath = $env:psmodulepath + ";" + $ModuleLocation
+$env:psmodulepath = $env:psmodulepath + ";" + "C:\projects"
 #Install dsc resource designer to make tests available
 Install-Module -Name xDSCResourceDesigner -force
 
+Write-Host `n
+Write-Host "PS Module Path: $($env:psmodulepath)"
+Write-Host `n
+
 ##Test the resource
 $DSC = Get-DscResource
+
+Write-Host `n
+Write-Host "Available Modules"
+Write-Host `n
+$DSC | Format-Table
+
 write-host `n
 write-host " Testing each resource in module: " -NoNewline
 write-host "$ModuleName" -ForegroundColor blue -BackgroundColor darkyellow
