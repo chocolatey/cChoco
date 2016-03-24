@@ -115,9 +115,6 @@ if ($env:APPVEYOR_PULL_REQUEST_TITLE)
     exit;
 }
 
-##Checkout git master branch
-#& git checkout master 2>$null
-Start-Process -FilePath git -ArgumentList "checkout master" -Wait -NoNewWindow
 
 #Update the manifest with included DSC Resources
 #Disabled for now as only supported in Powershell5
@@ -160,15 +157,4 @@ write-host `n
 
 Publish-Module -Name $ModuleName -NuGetApiKey $PublishingNugetKey
 
-##Commit updated version back to github
-$GitUpdatedFile = "$ModuleName.psd1"
-git config --global credential.helper store
-Add-Content "$env:USERPROFILE\.git-credentials" "https://$($env:github_access_token):x-oauth-basic@github.com`n"
-git config --global user.email "cibuild@withappveyor.com"
-git config --global user.name "AutomatedCI Build"
-git config --global push.default simple
-git add $GitUpdatedFile
-git commit -m "Pushed to PSGallery with updated version number: $($ModuleDefinition.ModuleVersion)"
-#Workaround for stderror redirect on appveyor causing build error. 
-Start-Process -FilePath git -ArgumentList "push" -Wait -NoNewWindow
 
