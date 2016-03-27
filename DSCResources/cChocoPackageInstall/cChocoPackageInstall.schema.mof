@@ -3,6 +3,7 @@ class cChocoPackageInstall : OMI_BaseResource
 {
   [Key] string Name;
   [write] string Params;
+  [write] string CmdParams;
   [write] string Version;
   [write] string Source;
 };
