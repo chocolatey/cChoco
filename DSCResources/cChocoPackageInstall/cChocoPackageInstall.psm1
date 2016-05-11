@@ -47,6 +47,9 @@ function Set-TargetResource
         [ValidateNotNullOrEmpty()]
         [System.String]
         $Name,   
+        [ValidateSet('Present','Absent')]
+        [System.String]
+        $Ensure='Present',
         [parameter(Mandatory = $false)]
         [ValidateNotNullOrEmpty()]
         [System.String]
@@ -65,20 +68,28 @@ function Set-TargetResource
 	
     CheckChocoInstalled
 
-	if ($Source)
-	{
-		$SourceCmdOutput = choco source remove -n="$Name"
-		$SourceCmdOutput += choco source add -n="$Name" -s="$Source"
-		Write-Verbose "Source command output: $SourceCmdOutput"
-	}
-    	
-	if	( `
-			(-not $Version) -and -not (IsPackageInstalled $Name) `
-			-or `
-			($Version) -and -not (IsPackageInstalled -pName $Name -pVersion $Version) `
-	)
-    {
-        InstallPackage -pName $Name -pParams $Params -pVersion $Version
+    $isInstalled = IsPackageInstalled $Name
+    $isInstalledVersion = IsPackageInstalled -pName $Name -pVersion $Version
+
+    if ($Ensure -ieq 'Present') {
+	    if ($Source)
+	    {
+		    $SourceCmdOutput = choco source remove -n="$Name"
+		    $SourceCmdOutput += choco source add -n="$Name" -s="$Source"
+		    Write-Verbose "Source command output: $SourceCmdOutput"
+	    }
+
+	    if	( `
+			    (-not $Version) -and -not ($isInstalled) `
+			    -or `
+			    ($Version) -and -not ($isInstalledVersion) `
+	    )
+        {
+            InstallPackage -pName $Name -pParams $Params -pVersion $Version
+        }
+    }
+    elseif ($isInstalled) {
+        UninstallPackage -pName $Name -pParams $Params
     }
 }
 
@@ -92,6 +103,9 @@ function Test-TargetResource
         [ValidateNotNullOrEmpty()]
         [System.String]
         $Name,
+        [ValidateSet('Present','Absent')]
+        [System.String]
+        $Ensure='Present',
         [parameter(Mandatory = $false)]
         [ValidateNotNullOrEmpty()]
         [System.String]
@@ -110,12 +124,20 @@ function Test-TargetResource
 
     CheckChocoInstalled
 
-	if	( `
-			(-not $Version) -and -not (IsPackageInstalled $Name) `
-			-or `
-			($Version) -and -not (IsPackageInstalled -pName $Name -pVersion $Version) `
-	)
-    {
+    $isInstalled = IsPackageInstalled $Name
+    $isInstalledVersion = IsPackageInstalled -pName $Name -pVersion $Version
+
+    if ($Ensure -ieq 'Present') {
+	    if	( `
+			    (-not $Version) -and -not ($isInstalled) `
+			    -or `
+			    ($Version) -and -not ($isInstalledVersion) `
+	    )
+        {
+            Return $false
+        }
+    }
+    elseif ($isInstalled) {
         Return $false
     }
 
@@ -165,6 +187,34 @@ function InstallPackage
     
     
     Write-Verbose "Package output $packageInstallOuput "
+
+    #refresh path varaible in powershell, as choco doesn"t, to pull in git
+    $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine")
+}
+
+function UninstallPackage 
+{
+    param(
+            [Parameter(Position=0,Mandatory=1)][string]$pName,
+            [Parameter(Position=1,Mandatory=0)][string]$pParams
+    )
+
+    $env:Path = [System.Environment]::GetEnvironmentVariable('Path','Machine')
+    
+    #Todo: Refactor
+    if (-not ($pParams))
+    {
+        Write-Verbose "Uninstalling Package Standard"
+        $packageUninstallOuput = choco uninstall $pName -y
+    }
+    elseif ($pParams)
+    {
+        Write-Verbose "Uninstalling Package with params $pParams"
+        $packageUninstallOuput = choco uninstall $pName --params="$pParams" -y            
+    }
+    
+    
+    Write-Verbose "Package uninstall output $packageUninstallOuput "
 
     #refresh path varaible in powershell, as choco doesn"t, to pull in git
     $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine")
