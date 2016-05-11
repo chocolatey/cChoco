@@ -15,6 +15,7 @@
       {
         Name = "googlechrome"
         DependsOn = "[cChocoInstaller]installChoco"
+		
       }
       cChocoPackageInstaller installAtomSpecificVersion
       {
@@ -24,8 +25,35 @@
       }
       cChocoPackageInstaller installGit
       {
+         Ensure = 'Present'
          Name = "git"
          Params = "/Someparam "
+         DependsOn = "[cChocoInstaller]installChoco"
+      }
+      cChocoPackageInstaller noFlashAllowed
+      {
+         Ensure = 'Absent'
+         Name = "flashplayerplugin"
+         DependsOn = "[cChocoInstaller]installChoco"
+      }
+      cChocoPackageInstallerSet installSomeStuff
+      {
+         Ensure = 'Present'
+         Name = @(
+			"git"
+			"skype"
+			"7zip"
+		)
+         DependsOn = "[cChocoInstaller]installChoco"
+      }
+      cChocoPackageInstallerSet stuffToBeRemoved
+      {
+         Ensure = 'Absent'
+         Name = @(
+			"vlc"
+			"ruby"
+			"adobeair"
+		)
          DependsOn = "[cChocoInstaller]installChoco"
       }
    }
