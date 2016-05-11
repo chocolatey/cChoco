@@ -1,4 +1,4 @@
-Configuration cChocoPackageInstallSet
+Configuration cChocoPackageInstallerSet
 {
 <#
 .SYNOPSIS
@@ -26,7 +26,7 @@ Composite DSC Resource allowing you to specify multiple choco packages in a sing
         ## We only need to specify the source one time,
         ## so we do it only with the first package
         if ($addSource) {
-            cChocoPackageInstall "cChocoPackageInstall_$pName" {
+            cChocoPackageInstaller "cChocoPackageInstaller_$($Ensure)_$($pName)" {
                 Ensure = $Ensure
                 Name = $pName
                 Source = $Source
@@ -34,7 +34,7 @@ Composite DSC Resource allowing you to specify multiple choco packages in a sing
             $addSource = $null
         }
         else {
-            cChocoPackageInstall "cChocoPackageInstall_$pName" {
+            cChocoPackageInstaller "cChocoPackageInstaller_$($Ensure)_$($pName)" {
                 Ensure = $Ensure
                 Name = $pName
             }
