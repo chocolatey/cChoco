@@ -1,5 +1,5 @@
 @{
-	Copyright = "(c) 2013 Lawrence Gripper, All rights reserved."; 
+	Copyright = "(c) 2013-2016 Lawrence Gripper, All rights reserved."; 
 	Description = "Module with DSC Resources for using Chocolatey http://chocolatey.org/"; 
 	CompanyName = "Lawrence Gripper"; 
 	GUID = "4857229F-8C2D-41BB-A068-9E3C0C8ED63D"; 
@@ -8,5 +8,5 @@
 	CLRVersion = "4.0"; 
 	CmdletsToExport = "*"; 
 	Author = "Lawrence Gripper"; 
-	ModuleVersion = "2.0.5.22"
+	ModuleVersion = "2.1.0.0"
 }
