@@ -129,35 +129,6 @@ function IsChocoInstalled
     
 }
 
-
-function ExecPowerShellScript
-{
-    param(
-        [Parameter(Position=1,Mandatory=0)][string]$block
-    )
-
-    $location = Get-Location
-    Write-Verbose " ExecPowerShellScriptBlock Prep Setting Current Location: $location"
-
-    $psi = New-object System.Diagnostics.ProcessStartInfo 
-    $psi.CreateNoWindow = $false 
-    $psi.UseShellExecute = $false 
-    $psi.RedirectStandardOutput = $true 
-    $psi.RedirectStandardError = $true 
-    $psi.FileName = "powershell" 
-    $psi.WorkingDirectory = $location.ToString()
-    $psi.Arguments = "-ExecutionPolicy Unrestricted -command $block" 
-    $process = New-Object System.Diagnostics.Process 
-    $process.StartInfo = $psi
-    $process.Start() | Out-Null
-    $process.WaitForExit()
-    $output = $process.StandardOutput.ReadToEnd() + $process.StandardError.ReadToEnd()
-
-    Write-Verbose " Exec powershell Command - $block"
-
-    return $output
-}
-
 function DoesCommandExist
 {
     Param ($command)
