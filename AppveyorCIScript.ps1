@@ -92,6 +92,11 @@ foreach ($Resource in ($DSC | ? {$_.Module.Name -eq $ModuleName}))
     write-host "Running Tests against $($Resource.Name) resource" -ForegroundColor Yellow
     try 
     {
+        if ($Resource.Name -eq "cChocoPackageInstallerSet")
+        {
+            Write-host "Skipping composite resource"
+            continue
+        }
         $Result = Test-xDscResource -Name $Resource.Name
         switch ($Result) 
         {
