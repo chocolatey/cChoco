@@ -62,7 +62,7 @@ function Set-TargetResource
             New-Item -Path $InstallDir -ItemType Directory
         }
         $file = Join-Path $InstallDir "install.ps1"
-        [Environment]::SetEnvironmentVariable("ChocolateyInstall", $InstallDir)
+        [Environment]::SetEnvironmentVariable("ChocolateyInstall", $InstallDir, [EnvironmentVariableTarget]::Machine)
         $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine")        
         
         $env:ChocolateyInstall = $InstallDir
