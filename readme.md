@@ -1,6 +1,6 @@
 [![Build status](https://ci.appveyor.com/api/projects/status/qma3jnh23w5vjt46?svg=true)](https://ci.appveyor.com/project/LawrenceGripper/cchoco)
 
-Community Chocolatey DSC Resource - @lawrencegripper
+Community Chocolatey DSC Resource
 =============================
 
 This resource is aimed at getting and installing packages from the choco gallery.
