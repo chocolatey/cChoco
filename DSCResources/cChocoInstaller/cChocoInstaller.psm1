@@ -62,7 +62,7 @@ function Set-TargetResource
             New-Item -Path $InstallDir -ItemType Directory
         }
         $file = Join-Path $InstallDir "install.ps1"
-        [Environment]::SetEnvironmentVariable("ChocolateyInstall", $InstallDir)
+        [Environment]::SetEnvironmentVariable("ChocolateyInstall", $InstallDir, [EnvironmentVariableTarget]::Machine)
         $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine")        
         
         $env:ChocolateyInstall = $InstallDir
@@ -73,8 +73,13 @@ function Set-TargetResource
         Write-Verbose '[ChocoInstaller] Finish InstallChoco'
 
         #refresh path varaible in powershell, as choco doesn"t, to pull in git
-        
     }
+	elseif((-not ($InstallDir -eq $env:ChocolateyInstall)) -and (Test-Path "$($InstallDir)\choco.exe"))
+	{
+		[Environment]::SetEnvironmentVariable("ChocolateyInstall", $InstallDir, [EnvironmentVariableTarget]::Machine)
+        $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine")        
+        $env:ChocolateyInstall = $InstallDir
+	}
 }
 
 function Test-TargetResource
