@@ -98,12 +98,20 @@ function Test-TargetResource
     )
 
     Write-Verbose "Start Test-TargetResource"
-	$exe = (get-command choco).Source
-	$chocofolder = $exe.Substring(0,$exe.LastIndexOf("\"))
+	
+	if($env:ChocolateyInstall -eq "" -or $env:ChocolateyInstall -eq $null)
+	{	
+		$exe = (get-command choco).Source
+		$chocofolder = $exe.Substring(0,$exe.LastIndexOf("\"))
 
-	if( $chocofolder.EndsWith("bin") )
+		if( $chocofolder.EndsWith("bin") )
+		{
+			$chocofolder = $chocofolder.Substring(0,$chocofolder.LastIndexOf("\"))
+		}
+	}
+	else
 	{
-		$chocofolder = $chocofolder.Substring(0,$chocofolder.LastIndexOf("\"))
+		$chocofolder = $env:ChocolateyInstall
 	}
 
 	$configfolder = "$chocofolder\config"
@@ -134,27 +142,5 @@ function Test-TargetResource
 	}
 }
 
-
-##region - chocolately installer work arounds. Main issue is use of write-host
-##attempting to work around the issues with Chocolatey calling Write-host in its scripts. 
-function global:Write-Host
-{
-    [CmdletBinding()]
-    Param(
-        [Parameter(Mandatory = $true, Position = 0)]
-        [Object]
-        $Object,
-        [Switch]
-        $NoNewLine,
-        [ConsoleColor]
-        $ForegroundColor,
-        [ConsoleColor]
-        $BackgroundColor
-
-    )
-
-    #Override default Write-Host...
-    Write-Verbose $Object
-}
 
 Export-ModuleMember -Function *-TargetResource
