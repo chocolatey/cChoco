@@ -8,5 +8,5 @@
 	CLRVersion = "4.0"; 
 	CmdletsToExport = "*"; 
 	Author = "Lawrence Gripper"; 
-	ModuleVersion = "2.1.0.0"
+	ModuleVersion = "2.1.0.3"
 }
