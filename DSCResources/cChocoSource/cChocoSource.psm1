@@ -48,8 +48,8 @@ function Set-TargetResource
         $Ensure='Present',
         [parameter(Mandatory = $false)]
         [ValidateNotNullOrEmpty()]
-        [int]
-        $Priority,    
+        [UInt32]
+        $Priority,
         [parameter(Mandatory = $false)]
         [ValidateNotNullOrEmpty()]
         [System.String]
