@@ -24,7 +24,7 @@ function Get-TargetResource
 
     Write-Verbose "Start Get-TargetResource"
 
-    if (-Not CheckChocoInstalled) {
+    if (-Not (CheckChocoInstalled)) {
         throw "cChocoPackageInstall requires Chocolatey to be installed, consider using cChocoInstaller with 'dependson' in dsc config"
     }
 
@@ -68,7 +68,7 @@ function Set-TargetResource
     )
     Write-Verbose "Start Set-TargetResource"
 	
-    if (-Not CheckChocoInstalled) {
+    if (-Not (CheckChocoInstalled)) {
         throw "cChocoPackageInstall requires Chocolatey to be installed, consider using cChocoInstaller with 'dependson' in dsc config"
     }
 
@@ -126,7 +126,7 @@ function Test-TargetResource
 
     Write-Verbose "Start Test-TargetResource"
 
-    if (-Not CheckChocoInstalled) {
+    if (-Not (CheckChocoInstalled)) {
         retuirn $false
     }
 
