@@ -24,7 +24,9 @@ function Get-TargetResource
 
     Write-Verbose "Start Get-TargetResource"
 
-    CheckChocoInstalled
+    if (-Not (CheckChocoInstalled)) {
+        throw "cChocoPackageInstall requires Chocolatey to be installed, consider using cChocoInstaller with 'dependson' in dsc config"
+    }
 
     #Needs to return a hashtable that returns the current
     #status of the configuration component
@@ -66,7 +68,9 @@ function Set-TargetResource
     )
     Write-Verbose "Start Set-TargetResource"
 	
-    CheckChocoInstalled
+    if (-Not (CheckChocoInstalled)) {
+        throw "cChocoPackageInstall requires Chocolatey to be installed, consider using cChocoInstaller with 'dependson' in dsc config"
+    }
 
     $isInstalled = IsPackageInstalled $Name
     $isInstalledVersion = IsPackageInstalled -pName $Name -pVersion $Version
@@ -122,7 +126,9 @@ function Test-TargetResource
 
     Write-Verbose "Start Test-TargetResource"
 
-    CheckChocoInstalled
+    if (-Not (CheckChocoInstalled)) {
+        retuirn $false
+    }
 
     $isInstalled = IsPackageInstalled $Name
     $isInstalledVersion = IsPackageInstalled -pName $Name -pVersion $Version
@@ -147,10 +153,7 @@ function Test-TargetResource
 
 function CheckChocoInstalled
 {
-    if (-not (DoesCommandExist choco))
-    {
-        throw "cChocoPackageInstall requires Chocolatey to be installed, consider using cChocoInstaller with 'dependson' in dsc config"
-    }
+    return DoesCommandExist choco
 }
 
 function InstallPackage
