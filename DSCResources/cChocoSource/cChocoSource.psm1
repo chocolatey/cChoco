@@ -12,11 +12,12 @@ function Get-TargetResource
         [System.String]
         $Ensure='Present',
         [parameter(Mandatory = $false)]
-        [ValidateNotNullOrEmpty()]
         [UInt32]
         $Priority,
         [parameter(Mandatory = $false)]
-        [ValidateNotNullOrEmpty()]
+        [System.Management.Automation.PSCredential]
+        $Credentials,
+        [parameter(Mandatory = $false)]
         [System.String]
         $Source
     )
@@ -47,11 +48,12 @@ function Set-TargetResource
         [System.String]
         $Ensure='Present',
         [parameter(Mandatory = $false)]
-        [ValidateNotNullOrEmpty()]
         [UInt32]
         $Priority,
         [parameter(Mandatory = $false)]
-        [ValidateNotNullOrEmpty()]
+        [System.Management.Automation.PSCredential]
+        $Credentials,
+        [parameter(Mandatory = $false)]
         [System.String]
         $Source
     )
@@ -59,13 +61,29 @@ function Set-TargetResource
 
 	if($Ensure -eq "Present")
 	{
-		if($priority -eq $null)
+		if($Credentials -eq $null)
 		{
-			choco sources add -n"$name" -s"$source"
+			if($priority -eq $null)
+			{
+				choco sources add -n"$name" -s"$source"
+			}
+			else
+			{
+				choco sources add -n"$name" -s"$source" --priority=$priority
+			}
 		}
 		else
 		{
-			choco sources add -n"$name" -s"$source" --priority=$priority
+			$username = $Credentials.UserName
+			$password = $Credentials.GetNetworkCredential().Password
+			if($priority -eq $null)
+			{
+				choco sources add -n"$name" -s"$source" -u="$username" -p="$password"
+			}
+			else
+			{
+				choco sources add -n"$name" -s"$source" -u="$username" -p="$password" --priority=$priority
+			}
 		}
 	}
 	else
@@ -88,11 +106,12 @@ function Test-TargetResource
         [System.String]
         $Ensure='Present',
         [parameter(Mandatory = $false)]
-        [ValidateNotNullOrEmpty()]
         [UInt32]
         $Priority,
         [parameter(Mandatory = $false)]
-        [ValidateNotNullOrEmpty()]
+        [System.Management.Automation.PSCredential]
+        $Credentials,
+        [parameter(Mandatory = $false)]
         [System.String]
         $Source
     )
