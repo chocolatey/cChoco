@@ -15,7 +15,7 @@ function Get-TargetResource
         [UInt32]
         $Priority,
         [parameter(Mandatory = $false)]
-        [System.Management.Automation.PSCredential]
+        [PSCredential]
         $Credentials,
         [parameter(Mandatory = $false)]
         [System.String]
@@ -51,7 +51,7 @@ function Set-TargetResource
         [UInt32]
         $Priority,
         [parameter(Mandatory = $false)]
-        [System.Management.Automation.PSCredential]
+        [PSCredential]
         $Credentials,
         [parameter(Mandatory = $false)]
         [System.String]
@@ -76,6 +76,7 @@ function Set-TargetResource
 		{
 			$username = $Credentials.UserName
 			$password = $Credentials.GetNetworkCredential().Password
+			
 			if($priority -eq $null)
 			{
 				choco sources add -n"$name" -s"$source" -u="$username" -p="$password"
@@ -109,7 +110,7 @@ function Test-TargetResource
         [UInt32]
         $Priority,
         [parameter(Mandatory = $false)]
-        [System.Management.Automation.PSCredential]
+        [PSCredential]
         $Credentials,
         [parameter(Mandatory = $false)]
         [System.String]
