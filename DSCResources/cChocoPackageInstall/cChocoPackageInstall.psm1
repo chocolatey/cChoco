@@ -127,7 +127,7 @@ function Test-TargetResource
     Write-Verbose "Start Test-TargetResource"
 
     if (-Not (CheckChocoInstalled)) {
-        retuirn $false
+        return $false
     }
 
     $isInstalled = IsPackageInstalled $Name
