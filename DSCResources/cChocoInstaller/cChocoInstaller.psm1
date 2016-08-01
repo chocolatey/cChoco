@@ -53,7 +53,7 @@ function Set-TargetResource
     )
     Write-Verbose " Start Set-TargetResource"
     
-    if (-not (Test-Command choco) -or -not (IsChocoInstalled))
+    if (-not(IsChocoInstalled))
     {
         #$env:Path = [System.Environment]::GetEnvironmentVariable('Path','Machine')
 
@@ -137,7 +137,7 @@ function IsChocoInstalled
 function Test-Command
 {
     Param ($command)
-    
+
     if(Get-Command -Name $command -ErrorAction SilentlyContinue)
     {
         return $true
