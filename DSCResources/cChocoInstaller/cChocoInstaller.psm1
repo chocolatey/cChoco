@@ -53,7 +53,7 @@ function Set-TargetResource
     )
     Write-Verbose " Start Set-TargetResource"
     
-    if (-not (DoesCommandExist choco) -or -not (IsChocoInstalled))
+    if (-not(IsChocoInstalled))
     {
         #$env:Path = [System.Environment]::GetEnvironmentVariable('Path','Machine')
 
@@ -120,7 +120,7 @@ function IsChocoInstalled
 
     $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine")
 
-    if (DoesCommandExist choco)
+    if (Test-Command choco)
     {
         Write-Verbose " YES - Choco is Installed"
 
@@ -134,27 +134,15 @@ function IsChocoInstalled
     
 }
 
-function DoesCommandExist
+function Test-Command
 {
     Param ($command)
 
-    $oldPreference = $ErrorActionPreference
-    $ErrorActionPreference = 'stop'
-
-    try 
+    if(Get-Command -Name $command -ErrorAction SilentlyContinue)
     {
-        if(Get-Command $command)
-        {
-            return $true
-        }
+        return $true
     }
-    Catch 
-    {
-        return $false
-    }
-    Finally {
-        $ErrorActionPreference=$oldPreference
-    }
+    return $false
 } 
 
 
