@@ -3,4 +3,5 @@ class cChocoInstaller : OMI_BaseResource
 {
 	[Key] string InstallDir;
 	[Write] string ChocoInstallScriptUrl;
+	[Write] string ChocoDownloadUrl;
 };
