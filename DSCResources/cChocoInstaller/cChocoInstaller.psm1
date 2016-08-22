@@ -49,7 +49,10 @@ function Set-TargetResource
         [parameter(Mandatory = $false)]
         [ValidateNotNullOrEmpty()]
         [System.String]
-        $ChocoInstallScriptUrl = "https://chocolatey.org/install.ps1"
+        $ChocoInstallScriptUrl = "https://chocolatey.org/install.ps1",
+        [parameter(Mandatory = $false)]
+        [System.String]
+        $ChocoDownloadUrl
     )
     Write-Verbose " Start Set-TargetResource"
     
@@ -63,6 +66,9 @@ function Set-TargetResource
         }
         $file = Join-Path $InstallDir "install.ps1"
         [Environment]::SetEnvironmentVariable("ChocolateyInstall", $InstallDir, [EnvironmentVariableTarget]::Machine)
+        if ($ChocoDownloadUrl) {
+            [Environment]::SetEnvironmentVariable("ChocolateyDownloadUrl", $ChocoDownloadUrl, [System.EnvironmentVariableTarget]::Machine)
+        }
         $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine")        
         
         $env:ChocolateyInstall = $InstallDir
@@ -95,7 +101,10 @@ function Test-TargetResource
         [parameter(Mandatory = $false)]
         [ValidateNotNullOrEmpty()]
         [System.String]
-        $ChocoInstallScriptUrl = "https://chocolatey.org/install.ps1"
+        $ChocoInstallScriptUrl = "https://chocolatey.org/install.ps1",
+        [parameter(Mandatory = $false)]
+        [System.String]
+        $ChocoDownloadUrl
     )
 
     Write-Verbose " Start Test-TargetResource"
