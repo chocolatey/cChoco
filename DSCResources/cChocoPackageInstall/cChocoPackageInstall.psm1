@@ -19,7 +19,10 @@ function Get-TargetResource
 		[parameter(Mandatory = $false)]
         [ValidateNotNullOrEmpty()]
         [System.String]
-        $Source
+        $Source,
+        [parameter(Mandatory = $false)]
+        [bool]
+        $AllowEmptyChecksums=$false    
     )
 
     Write-Verbose "Start Get-TargetResource"
@@ -35,6 +38,7 @@ function Get-TargetResource
         Params = $Params
         Version = $Version
 		Source = $Source
+        AllowEmptyChecksums = $AllowEmptyChecksums
     }
 
     return $Configuration
@@ -63,8 +67,10 @@ function Set-TargetResource
 		[parameter(Mandatory = $false)]
         [ValidateNotNullOrEmpty()]
         [System.String]
-        $Source
-
+        $Source,
+        [parameter(Mandatory = $false)]
+        [bool]
+        $AllowEmptyChecksums=$false
     )
     Write-Verbose "Start Set-TargetResource"
 	
@@ -89,7 +95,7 @@ function Set-TargetResource
 			    ($Version) -and -not ($isInstalledVersion) `
 	    )
         {
-            InstallPackage -pName $Name -pParams $Params -pVersion $Version
+            InstallPackage -pName $Name -pParams $Params -pVersion $Version -allowEmptyChecksums $AllowEmptyChecksums
         }
     }
     elseif ($isInstalled) {
@@ -121,7 +127,10 @@ function Test-TargetResource
 		[parameter(Mandatory = $false)]
         [ValidateNotNullOrEmpty()]
         [System.String]
-        $Source
+        $Source,
+        [parameter(Mandatory = $false)]
+        [bool]
+        $AllowEmptyChecksums=$false
     )
 
     Write-Verbose "Start Test-TargetResource"
@@ -170,22 +179,50 @@ function InstallPackage
     if ((-not ($pParams)) -and (-not $pVersion))
     {
         Write-Verbose "Installing Package Standard"
-        $packageInstallOuput = choco install $pName -y
+        if ($AllowEmptyChecksums -eq $true)
+        {
+            $packageInstallOuput = choco install $pName -y --allowEmptyChecksums
+        }
+        else
+        {
+            $packageInstallOuput = choco install $pName -y
+        }    
     }
     elseif ($pParams -and $pVersion)
     {
         Write-Verbose "Installing Package with Params $pParams and Version $pVersion"
-        $packageInstallOuput = choco install $pName --params="$pParams" --version=$pVersion -y        
+        if ($AllowEmptyChecksums -eq $true)
+        {
+            $packageInstallOuput = choco install $pName --params="$pParams" --version=$pVersion -y --allowEmptyChecksums     
+        }
+        else
+        {
+            $packageInstallOuput = choco install $pName --params="$pParams" --version=$pVersion -y    
+        }
     }
     elseif ($pParams)
     {
         Write-Verbose "Installing Package with params $pParams"
-        $packageInstallOuput = choco install $pName --params="$pParams" -y            
+        if ($AllowEmptyChecksums -eq $true)
+        {
+            $packageInstallOuput = choco install $pName --params="$pParams" -y --allowEmptyChecksums
+        }
+        else
+        {
+            $packageInstallOuput = choco install $pName --params="$pParams" -y 
+        }
     }
     elseif ($pVersion)
     {
         Write-Verbose "Installing Package with version $pVersion"
-        $packageInstallOuput = choco install $pName --version=$pVersion -y        
+        if ($AllowEmptyChecksums -eq $true)
+        {
+            $packageInstallOuput = choco install $pName --version=$pVersion -y 
+        }
+        else
+        {
+            $packageInstallOuput = choco install $pName --version=$pVersion -y 
+        }
     }
     
     

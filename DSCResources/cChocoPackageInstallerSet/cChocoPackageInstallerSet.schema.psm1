@@ -17,8 +17,10 @@ Composite DSC Resource allowing you to specify multiple choco packages in a sing
 		[parameter(Mandatory = $false)]
         [ValidateNotNullOrEmpty()]
         [System.String]
-        $Source
-    )
+        $Source,
+        [parameter(Mandatory = $false)]
+        [bool]
+        $AllowEmptyChecksums=$false    )
 
     $addSource = $Source
 
@@ -30,6 +32,7 @@ Composite DSC Resource allowing you to specify multiple choco packages in a sing
                 Ensure = $Ensure
                 Name = $pName
                 Source = $Source
+                AllowEmptyChecksums = $AllowEmptyChecksums
             }
             $addSource = $null
         }
@@ -37,6 +40,7 @@ Composite DSC Resource allowing you to specify multiple choco packages in a sing
             cChocoPackageInstaller "cChocoPackageInstaller_$($Ensure)_$($pName)" {
                 Ensure = $Ensure
                 Name = $pName
+                AllowEmptyChecksums = $AllowEmptyChecksums
             }
         }
     }
