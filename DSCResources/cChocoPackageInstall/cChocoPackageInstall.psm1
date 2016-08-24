@@ -22,7 +22,8 @@ function Get-TargetResource
         $Source,
         [parameter(Mandatory = $false)]
         [bool]
-        $AllowEmptyChecksums=$false    )
+        $AllowEmptyChecksums=$false    
+    )
 
     Write-Verbose "Start Get-TargetResource"
 
