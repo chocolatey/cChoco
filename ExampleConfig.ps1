@@ -30,6 +30,12 @@
          Params = "/Someparam "
          DependsOn = "[cChocoInstaller]installChoco"
       }
+      cChocoPackageInstaller installGitChocoEmptyChecksum
+      {
+          Ensure = 'Present'
+          Name = 'git'
+          AllowEmptyChecksums = $true #This property is only valid for chocolatey v0.10.0 or later.
+      }
       cChocoPackageInstaller noFlashAllowed
       {
          Ensure = 'Absent'
