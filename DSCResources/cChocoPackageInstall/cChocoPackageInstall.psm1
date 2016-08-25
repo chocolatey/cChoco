@@ -42,57 +42,60 @@ function Get-TargetResource
 
 function Set-TargetResource
 {
-    [CmdletBinding()]    
-    param
-    (
-        [parameter(Mandatory = $true)]
-        [ValidateNotNullOrEmpty()]
-        [System.String]
-        $Name,   
-        [ValidateSet('Present','Absent')]
-        [System.String]
-        $Ensure='Present',
-        [parameter(Mandatory = $false)]
-        [ValidateNotNullOrEmpty()]
-        [System.String]
-        $Params,    
-        [parameter(Mandatory = $false)]
-        [ValidateNotNullOrEmpty()]
-        [System.String]
-        $Version,   
-		[parameter(Mandatory = $false)]
-        [ValidateNotNullOrEmpty()]
-        [System.String]
-        $Source
-
-    )
-    Write-Verbose "Start Set-TargetResource"
+  [CmdletBinding()]    
+  param
+  (
+    [parameter(Mandatory = $true)]
+    [ValidateNotNullOrEmpty()]
+    [System.String]
+    $Name,   
+    [ValidateSet('Present','Absent')]
+    [System.String]
+    $Ensure='Present',
+    [parameter(Mandatory = $false)]
+    [ValidateNotNullOrEmpty()]
+    [System.String]
+    $Params,    
+    [parameter(Mandatory = $false)]
+    [ValidateNotNullOrEmpty()]
+    [System.String]
+    $Version,   
+    [parameter(Mandatory = $false)]
+    [ValidateNotNullOrEmpty()]
+    [System.String]
+    $Source,
+    [parameter(Mandatory = $false)]
+    [ValidateSet('allowunofficial','prerelease','forcex86','allowdowngrade','sidebyside','ignoredependencies','ignorechecksums','allowemptychecksum','allowemptychecksumsecure')]
+    [String[]]
+    $chocoSwitchParams
+  )
+  Write-Verbose "Start Set-TargetResource"
 	
-    if (-Not (CheckChocoInstalled)) {
-        throw "cChocoPackageInstall requires Chocolatey to be installed, consider using cChocoInstaller with 'dependson' in dsc config"
+  if (-Not (CheckChocoInstalled)) {
+    throw "cChocoPackageInstall requires Chocolatey to be installed, consider using cChocoInstaller with 'dependson' in dsc config"
+  }
+
+  $isInstalled = IsPackageInstalled $Name
+  $isInstalledVersion = IsPackageInstalled -pName $Name -pVersion $Version
+
+  if ($Ensure -ieq 'Present') {
+    if ($Source)
+    {
+      $SourceCmdOutput = choco source remove -n="$Name"
+      $SourceCmdOutput += choco source add -n="$Name" -s="$Source"
+      Write-Verbose "Source command output: $SourceCmdOutput"
     }
 
-    $isInstalled = IsPackageInstalled $Name
-    $isInstalledVersion = IsPackageInstalled -pName $Name -pVersion $Version
-
-    if ($Ensure -ieq 'Present') {
-	    if ($Source)
-	    {
-		    $SourceCmdOutput = choco source remove -n="$Name"
-		    $SourceCmdOutput += choco source add -n="$Name" -s="$Source"
-		    Write-Verbose "Source command output: $SourceCmdOutput"
-	    }
-
-	    if	( `
-			    (-not $Version) -and -not ($isInstalled) `
-			    -or `
-			    ($Version) -and -not ($isInstalledVersion) `
-	    )
-        {
-            InstallPackage -pName $Name -pParams $Params -pVersion $Version
-        }
+    if	( `
+      (-not $Version) -and -not ($isInstalled) `
+      -or `
+      ($Version) -and -not ($isInstalledVersion) `
+    )
+    {
+      InstallPackage -pName $Name -pParams $Params -pVersion $Version -cSwitchParams $chocoSwitchParams
     }
-    elseif ($isInstalled) {
+  }
+  elseif ($isInstalled) {
         UninstallPackage -pName $Name -pParams $Params
     }
 }
@@ -118,10 +121,14 @@ function Test-TargetResource
         [ValidateNotNullOrEmpty()]
         [System.String]
         $Version,
-		[parameter(Mandatory = $false)]
+        [parameter(Mandatory = $false)]
         [ValidateNotNullOrEmpty()]
         [System.String]
-        $Source
+        $Source,
+        [parameter(Mandatory = $false)]
+        [ValidateSet('allowunofficial','prerelease','forcex86','allowdowngrade','sidebyside','ignoredependencies','ignorechecksums','allowemptychecksum','allowemptychecksumsecure')]
+        [String[]]
+        $chocoSwitchParams
     )
 
     Write-Verbose "Start Test-TargetResource"
@@ -161,34 +168,25 @@ function InstallPackage
     param(
             [Parameter(Position=0,Mandatory=1)][string]$pName,
             [Parameter(Position=1,Mandatory=0)][string]$pParams,
-            [Parameter(Position=2,Mandatory=0)][string]$pVersion
+            [Parameter(Position=2,Mandatory=0)][string]$pVersion,
+            [Parameter(Position=3,Mandatory=0)][string[]]$cSwitchParams
     ) 
 
     $env:Path = [System.Environment]::GetEnvironmentVariable('Path','Machine')
     
-    #Todo: Refactor
-    if ((-not ($pParams)) -and (-not $pVersion))
-    {
-        Write-Verbose "Installing Package Standard"
-        $packageInstallOuput = choco install $pName -y
+    [string]$chocoinstallparams = '-y'
+    if ($pParams) {
+      $chocoinstallparams += " --params=`"$pParams`""
     }
-    elseif ($pParams -and $pVersion)
-    {
-        Write-Verbose "Installing Package with Params $pParams and Version $pVersion"
-        $packageInstallOuput = choco install $pName --params="$pParams" --version=$pVersion -y        
+    if ($pVersion) {
+      $chocoinstallparams += " --version=`"$pVersion`""
     }
-    elseif ($pParams)
-    {
-        Write-Verbose "Installing Package with params $pParams"
-        $packageInstallOuput = choco install $pName --params="$pParams" -y            
+    if ($cSwitchParams) {
+      $cSwitchParams | ForEach-Object { $chocoinstallparams += " --$_" }
     }
-    elseif ($pVersion)
-    {
-        Write-Verbose "Installing Package with version $pVersion"
-        $packageInstallOuput = choco install $pName --version=$pVersion -y        
-    }
+    Write-Verbose "Install command: 'choco install $pName $chocoinstallparams'"
     
-    
+    $packageInstallOuput = iex "choco install $pName $chocoinstallparams"
     Write-Verbose "Package output $packageInstallOuput "
 
     #refresh path varaible in powershell, as choco doesn"t, to pull in git
