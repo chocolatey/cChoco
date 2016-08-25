@@ -1,20 +1,19 @@
 function Get-TargetResource
 {
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
+    [OutputType([hashtable])]
     param
     (
         [parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
-        [System.String]
+        [string]
         $InstallDir,
         [parameter(Mandatory = $false)]
         [ValidateNotNullOrEmpty()]
-        [System.String]
-        $ChocoInstallScriptUrl = "https://chocolatey.org/install.ps1"
+        [string]
+        $ChocoInstallScriptUrl = 'https://chocolatey.org/install.ps1'
 
     )
-    Write-Verbose " Start Get-TargetResource"
+    Write-Verbose ' Start Get-TargetResource'
 
 
     #Needs to return a hashtable that returns the current
@@ -24,7 +23,7 @@ function Get-TargetResource
         ChocoInstallScriptUrl = $ChocoInstallScriptUrl
     }
 
-    if (-not (IsChocoInstalled))
+    if (-not (Test-ChocoInstalled))
     {
         #$Configuration.Ensure = "Absent"
         Return $Configuration
@@ -39,21 +38,21 @@ function Get-TargetResource
 
 function Set-TargetResource
 {
-    [CmdletBinding()]    
+    [CmdletBinding(SupportsShouldProcess = $true)]
     param
     (
         [parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
-        [System.String]
+        [string]
         $InstallDir,
         [parameter(Mandatory = $false)]
         [ValidateNotNullOrEmpty()]
-        [System.String]
-        $ChocoInstallScriptUrl = "https://chocolatey.org/install.ps1"
+        [string]
+        $ChocoInstallScriptUrl = 'https://chocolatey.org/install.ps1'
     )
-    Write-Verbose " Start Set-TargetResource"
+    Write-Verbose ' Start Set-TargetResource'
     
-    if (-not (DoesCommandExist choco) -or -not (IsChocoInstalled))
+    if (-not (Test-Command -command choco) -or -not (Test-ChocoInstalled))
     {
         #$env:Path = [System.Environment]::GetEnvironmentVariable('Path','Machine')
 
@@ -61,12 +60,12 @@ function Set-TargetResource
         If(-not (Test-Path -Path $InstallDir)) {
             New-Item -Path $InstallDir -ItemType Directory
         }
-        $file = Join-Path $InstallDir "install.ps1"
-        [Environment]::SetEnvironmentVariable("ChocolateyInstall", $InstallDir, [EnvironmentVariableTarget]::Machine)
-        $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine")        
+        $file = Join-Path $InstallDir 'install.ps1'
+        [Environment]::SetEnvironmentVariable('ChocolateyInstall', $InstallDir, [EnvironmentVariableTarget]::Machine)
+        $env:Path = [Environment]::GetEnvironmentVariable('Path','Machine')        
         
         $env:ChocolateyInstall = $InstallDir
-        Download-File $ChocoInstallScriptUrl $file
+        Get-FileDownload $ChocoInstallScriptUrl $file
         . $file
         
         #InstallChoco $InstallDir
@@ -76,31 +75,30 @@ function Set-TargetResource
     }
 	elseif((-not ($InstallDir -eq $env:ChocolateyInstall)) -and (Test-Path "$($InstallDir)\choco.exe"))
 	{
-		[Environment]::SetEnvironmentVariable("ChocolateyInstall", $InstallDir, [EnvironmentVariableTarget]::Machine)
-        $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine")        
+		[Environment]::SetEnvironmentVariable('ChocolateyInstall', $InstallDir, [EnvironmentVariableTarget]::Machine)
+        $env:Path = [Environment]::GetEnvironmentVariable('Path','Machine')        
         $env:ChocolateyInstall = $InstallDir
 	}
 }
 
 function Test-TargetResource
 {
-    [CmdletBinding()]
-    [OutputType([System.Boolean])]
+    [OutputType([bool])]
     param
     (
         [parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
-        [System.String]
+        [string]
         $InstallDir,
         [parameter(Mandatory = $false)]
         [ValidateNotNullOrEmpty()]
-        [System.String]
-        $ChocoInstallScriptUrl = "https://chocolatey.org/install.ps1"
+        [string]
+        $ChocoInstallScriptUrl = 'https://chocolatey.org/install.ps1'
     )
 
-    Write-Verbose " Start Test-TargetResource"
+    Write-Verbose ' Start Test-TargetResource'
 
-    if (-not (IsChocoInstalled))
+    if (-not (Test-ChocoInstalled))
     {
         Return $false
     }
@@ -113,48 +111,32 @@ function Test-TargetResource
     Return $true
 }
 
-function IsChocoInstalled
+function Test-ChocoInstalled
 {
 
-    Write-Verbose " Is choco installed? "
+    Write-Verbose ' Is choco installed? '
+    $env:Path = [Environment]::GetEnvironmentVariable('Path','Machine')
 
-    $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine")
-
-    if (DoesCommandExist choco)
+    if (Test-Command choco)
     {
-        Write-Verbose " YES - Choco is Installed"
-
+        Write-Verbose ' YES - Choco is Installed'
         return $true
     }
 
     Write-Verbose " NO - Choco isn't Installed"
-
     return $false
-
-    
 }
 
-function DoesCommandExist
+Function Test-Command
 {
-    Param ($command)
-
-    $oldPreference = $ErrorActionPreference
-    $ErrorActionPreference = 'stop'
-
-    try 
-    {
-        if(Get-Command $command)
-        {
-            return $true
-        }
-    }
-    Catch 
-    {
-        return $false
-    }
-    Finally {
-        $ErrorActionPreference=$oldPreference
-    }
+  Param (
+    [string]$command
+  )
+  if (Get-Command -Name $command -ErrorAction SilentlyContinue) {
+    return $true
+  } else {
+    return $false
+  } 
 } 
 
 
@@ -162,34 +144,24 @@ function DoesCommandExist
 ##attempting to work around the issues with Chocolatey calling Write-host in its scripts. 
 function global:Write-Host
 {
-    [CmdletBinding()]
     Param(
         [Parameter(Mandatory = $true, Position = 0)]
-        [Object]
         $Object,
-        [Switch]
-        $NoNewLine,
-        [ConsoleColor]
-        $ForegroundColor,
-        [ConsoleColor]
-        $BackgroundColor
-
+        [Switch]$NoNewLine,
+        [ConsoleColor]$ForegroundColor,
+        [ConsoleColor]$BackgroundColor
     )
-
     #Override default Write-Host...
     Write-Verbose $Object
 }
 
-function Download-File {
-param (
-  [string]$url,
-  [string]$file
- )
+function Get-FileDownload {
+  param (
+    [string]$url,
+    [string]$file
+  )
   Write-Output "Downloading $url to $file"
   $downloader = new-object System.Net.WebClient
-
-  $defaultCreds = [System.Net.CredentialCache]::DefaultCredentials
-
   $downloader.DownloadFile($url, $file)
 }
 
