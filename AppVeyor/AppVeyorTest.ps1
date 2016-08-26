@@ -8,7 +8,9 @@ Write-Host "Current working directory: $pwd"
 # Run Pester Tests                # 
 #---------------------------------# 
 $resultsFile = '.\TestsResults.xml'
-$testFiles   = Get-ChildItem | Select-Object -ExpandProperty FullName
+$projectpath = split-path $MyInvocation.MyCommand.Path -Parent
+$testspath   = "$projectpath\..\tests"
+$testFiles   = Get-ChildItem $testspath | Select-Object -ExpandProperty FullName
 $results     = Invoke-Pester -Script $testFiles -OutputFormat NUnitXml -OutputFile $resultsFile -PassThru
 
 Write-Host 'Uploading results'
