@@ -11,6 +11,7 @@ Write-Host 'Creating new module manifest'
 $ModuleManifestPath = Join-Path -path "$pwd" -ChildPath ("$env:ModuleName"+'.psd1')
 $ModuleManifest     = Get-Content $ModuleManifestPath -Raw
 
+Write-Host "Updating module manifest to version: $env:APPVEYOR_BUILD_VERSION"
 [regex]::replace($ModuleManifest,'(ModuleVersion = )(.*)',"`$1'$env:APPVEYOR_BUILD_VERSION'") | Out-File -LiteralPath $ModuleManifestPath
 
 #---------------------------------# 
@@ -22,6 +23,7 @@ if ($env:APPVEYOR_REPO_BRANCH -notmatch 'master')
     exit;
 }
 
-Write-Host 'Publishing module to Powershell Gallery is disabled'
-#Uncomment the below line, make sure you set the variables in appveyor.yml
-#Publish-Module -Name $env:ModuleName -NuGetApiKey $env:NuGetApiKey
+Write-Host "Publishing module to Powershell Gallery: "
+Publish-Module -Name $env:ModuleName -NuGetApiKey $env:nugetKey
+
+Write-Host 'Done!' -ForegroundColor Green
