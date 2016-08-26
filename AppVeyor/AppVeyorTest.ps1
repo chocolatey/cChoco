@@ -9,15 +9,19 @@ Write-Host "Current working directory: $pwd"
 #---------------------------------# 
 $resultsFile = '.\TestsResults.xml'
 $testFiles   = Get-ChildItem | Select-Object -ExpandProperty FullName
-$results     = Invoke-Pester -Script $testFiles -OutputFormat NUnitXml -OutputFile $resultsultsFile -PassThru
+$results     = Invoke-Pester -Script $testFiles -OutputFormat NUnitXml -OutputFile $resultsFile -PassThru
 
 Write-Host 'Uploading results'
-(New-Object 'System.Net.WebClient').UploadFile("https://ci.appveyor.com/api/testresults/nunit/$($env:APPVEYOR_JOB_ID)", (Resolve-Path $resultsFile))
+try {
+  (New-Object 'System.Net.WebClient').UploadFile("https://ci.appveyor.com/api/testresults/nunit/$($env:APPVEYOR_JOB_ID)", (Resolve-Path $resultsFile))
+} catch {
+  throw "Upload failed."
+}
 
 #---------------------------------# 
 # Validate                        # 
 #---------------------------------# 
-if (($results.FailedCount -gt 0) -or ($results.PassedCount -eq 0)) { 
+if (($results.FailedCount -gt 0) -or ($results.PassedCount -eq 0) -or ($null -eq $results)) { 
   throw "$($results.FailedCount) tests failed."
 } else {
   Write-Host 'All tests passed' -ForegroundColor Green
