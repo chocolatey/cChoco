@@ -38,7 +38,6 @@ function Get-TargetResource
 
 function Set-TargetResource
 {
-    [CmdletBinding(SupportsShouldProcess = $true)]
     param
     (
         [parameter(Mandatory = $true)]
