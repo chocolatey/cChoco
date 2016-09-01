@@ -172,6 +172,32 @@ function InstallPackage
         Write-Verbose "Installing Package Standard"
         $packageInstallOuput = choco install $pName -y
     }
+	elseif($pVersion -eq "Latest")
+	{
+		if($pParams)
+		{
+			#Check if Package is installed so that we can upgrade rather than install
+			if(IsPackageInstalled -pName $pName)
+			{
+				$packageInstallOuput = choco upgrade $pname --params="$pParams" -y
+			}
+			else
+			{
+				$packageInstallOuput = choco install $pName --params="$pParams" -y
+			}
+		}
+		else
+		{
+			if(IsPackageInstalled -pName $pName)
+			{
+				$packageInstallOuput = choco upgrade $pname -y
+			}
+			else
+			{
+				$packageInstallOuput = choco install $pName -y
+			}
+		}
+	}
     elseif ($pParams -and $pVersion)
     {
         Write-Verbose "Installing Package with Params $pParams and Version $pVersion"
@@ -234,7 +260,16 @@ function IsPackageInstalled
 
     $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine")
 
-	if ($pVersion) {
+	if($pVersion -eq "Latest") {
+		
+		$outdated = choco outdated -r | Where-object { $_.ToLower().Contains($pName.ToLower()) }
+		
+		if($outdated -eq $null)
+		{
+			$installedPackages = choco list -lo | Where-object { $_.ToLower().Contains($pName.ToLower()) }
+		}
+	}
+	elseif ($pVersion) {
 		$installedPackages = choco list -lo | Where-object { $_.ToLower().Contains($pName.ToLower()) -and $_.ToLower().Contains($pVersion.ToLower()) }
 	} else {
 		$installedPackages = choco list -lo | Where-object { $_.ToLower().Contains($pName.ToLower()) }
