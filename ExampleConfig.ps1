@@ -17,6 +17,14 @@
         DependsOn = "[cChocoInstaller]installChoco"
 		
       }
+      cChocoPackageInstaller installSkypeWithChocoParams
+      {
+        Name                 = 'skype'
+        chocoParams          = '--allowdowngrade --allowemptychecksum --allowemptychecksumsecure'
+        Ensure               = 'Present'
+        Version              = '7.25.0.106'
+        DependsOn            = '[cChocoInstaller]installChoco'
+      }
       cChocoPackageInstaller installAtomSpecificVersion
       {
         Name = "atom"
@@ -40,8 +48,7 @@
       {
          Ensure = 'Present'
          Name = @(
-			"git"
-			"skype"
+			"git",
 			"7zip"
 		)
          DependsOn = "[cChocoInstaller]installChoco"
@@ -50,8 +57,8 @@
       {
          Ensure = 'Absent'
          Name = @(
-			"vlc"
-			"ruby"
+			"vlc",
+			"ruby",
 			"adobeair"
 		)
          DependsOn = "[cChocoInstaller]installChoco"
