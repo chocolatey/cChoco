@@ -35,7 +35,7 @@
       {
          Ensure = 'Present'
          Name = "git"
-         Params = "/Someparam "
+         Params = "/Someparam-passed-to-installer " 
          DependsOn = "[cChocoInstaller]installChoco"
       }
       cChocoPackageInstaller noFlashAllowed
