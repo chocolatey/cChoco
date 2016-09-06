@@ -60,10 +60,13 @@ function Set-TargetResource
         [ValidateNotNullOrEmpty()]
         [System.String]
         $Version,   
-		[parameter(Mandatory = $false)]
+		    [parameter(Mandatory = $false)]
         [ValidateNotNullOrEmpty()]
         [System.String]
-        $Source
+        $Source,
+        [parameter(Mandatory = $false)]
+        [String]
+        $chocoParams
 
     )
     Write-Verbose "Start Set-TargetResource"
@@ -89,7 +92,7 @@ function Set-TargetResource
 			    ($Version) -and -not ($isInstalledVersion) `
 	    )
         {
-            InstallPackage -pName $Name -pParams $Params -pVersion $Version
+            InstallPackage -pName $Name -pParams $Params -pVersion $Version -cParams $chocoParams
         }
     }
     elseif ($isInstalled) {
@@ -118,10 +121,13 @@ function Test-TargetResource
         [ValidateNotNullOrEmpty()]
         [System.String]
         $Version,
-		[parameter(Mandatory = $false)]
+		    [parameter(Mandatory = $false)]
         [ValidateNotNullOrEmpty()]
         [System.String]
-        $Source
+        $Source,
+        [parameter(Mandatory = $false)]
+        [String]
+        $chocoParams
     )
 
     Write-Verbose "Start Test-TargetResource"
@@ -159,36 +165,27 @@ function CheckChocoInstalled
 function InstallPackage
 {
     param(
-            [Parameter(Position=0,Mandatory=1)][string]$pName,
-            [Parameter(Position=1,Mandatory=0)][string]$pParams,
-            [Parameter(Position=2,Mandatory=0)][string]$pVersion
+      [Parameter(Position=0,Mandatory=1)][string]$pName,
+      [Parameter(Position=1,Mandatory=0)][string]$pParams,
+      [Parameter(Position=2,Mandatory=0)][string]$pVersion,
+      [Parameter(Position=3,Mandatory=0)][string]$cParams
     ) 
 
     $env:Path = [System.Environment]::GetEnvironmentVariable('Path','Machine')
     
-    #Todo: Refactor
-    if ((-not ($pParams)) -and (-not $pVersion))
-    {
-        Write-Verbose "Installing Package Standard"
-        $packageInstallOuput = choco install $pName -y
+    [string]$chocoinstallparams = '-y'
+    if ($pParams) {
+      $chocoinstallparams += " --params=`"$pParams`""
     }
-    elseif ($pParams -and $pVersion)
-    {
-        Write-Verbose "Installing Package with Params $pParams and Version $pVersion"
-        $packageInstallOuput = choco install $pName --params="$pParams" --version=$pVersion -y        
+    if ($pVersion) {
+      $chocoinstallparams += " --version=`"$pVersion`""
     }
-    elseif ($pParams)
-    {
-        Write-Verbose "Installing Package with params $pParams"
-        $packageInstallOuput = choco install $pName --params="$pParams" -y            
+    if ($cParams) {
+      $chocoinstallparams += " $cParams"
     }
-    elseif ($pVersion)
-    {
-        Write-Verbose "Installing Package with version $pVersion"
-        $packageInstallOuput = choco install $pName --version=$pVersion -y        
-    }
+    Write-Verbose "Install command: 'choco install $pName $chocoinstallparams'"
     
-    
+    $packageInstallOuput = Invoke-Expression "choco install $pName $chocoinstallparams"
     Write-Verbose "Package output $packageInstallOuput "
 
     #refresh path varaible in powershell, as choco doesn"t, to pull in git
