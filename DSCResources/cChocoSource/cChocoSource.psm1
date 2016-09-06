@@ -133,7 +133,7 @@ function Test-TargetResource
 	{
 		$chocofolder = $env:ChocolateyInstall
 	}
-        choco
+        choco | Out-Null
 	$configfolder = "$chocofolder\config"
 	$configfile = Get-ChildItem $configfolder | Where-Object {$_.Name -match "chocolatey.config"}
 
