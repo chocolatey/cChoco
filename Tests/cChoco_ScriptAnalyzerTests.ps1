@@ -1,7 +1,7 @@
 ﻿#---------------------------------# 
 # PSScriptAnalyzer tests          # 
 #---------------------------------# 
-$Rules   = Get-ScriptAnalyzerRule | Where-Object {$_.RuleName -notmatch 'PSUseShouldProcessForStateChangingFunctions'}
+$Rules   = Get-ScriptAnalyzerRule | Where-Object {$_.RuleName -notmatch 'PSUseShouldProcessForStateChangingFunctions|PSUseDeclaredVarsMoreThanAssignments|PSShouldProcess'}
 
 #Only run on cChocoInstaller.psm1 for now as this is the only resource that has had code adjustments for PSScriptAnalyzer rules.
 $Modules = Get-ChildItem “$PSScriptRoot\..\” -Filter ‘*.psm1’ -Recurse | Where-Object {$_.FullName -match 'cChocoInstaller.psm1$'}
