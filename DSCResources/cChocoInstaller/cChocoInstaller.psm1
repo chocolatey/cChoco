@@ -68,6 +68,8 @@ function Set-TargetResource
         . $file
         
         #InstallChoco $InstallDir
+        #Initialize choco
+        choco | Out-Null
         Write-Verbose '[ChocoInstaller] Finish InstallChoco'
 
         #refresh path varaible in powershell, as choco doesn"t, to pull in git
