@@ -44,6 +44,7 @@ function Set-TargetResource
         [ValidateNotNullOrEmpty()]
         [string]
         $InstallDir,
+
         [parameter(Mandatory = $false)]
         [ValidateNotNullOrEmpty()]
         [string]
@@ -53,17 +54,19 @@ function Set-TargetResource
     
     if (-not (Test-Command -command choco) -or -not (Test-ChocoInstalled))
     {
-        #$env:Path = [System.Environment]::GetEnvironmentVariable('Path','Machine')
-
         Write-Verbose '[ChocoInstaller] Start InstallChoco'
         If(-not (Test-Path -Path $InstallDir)) {
             New-Item -Path $InstallDir -ItemType Directory
         }
         $file = Join-Path $InstallDir 'install.ps1'
+
+        #Set permanent EnvironmentVariable
         [Environment]::SetEnvironmentVariable('ChocolateyInstall', $InstallDir, [EnvironmentVariableTarget]::Machine)
-        $env:Path = [Environment]::GetEnvironmentVariable('Path','Machine')        
+
+        #Update EnvironmentVariables in current LCM session
+        $env:Path              += ";$InstallDir\bin"
+        $env:ChocolateyInstall =  $InstallDir
         
-        $env:ChocolateyInstall = $InstallDir
         Get-FileDownload $ChocoInstallScriptUrl $file
         . $file
         
@@ -77,7 +80,7 @@ function Set-TargetResource
 	elseif((-not ($InstallDir -eq $env:ChocolateyInstall)) -and (Test-Path "$($InstallDir)\choco.exe"))
 	{
 		[Environment]::SetEnvironmentVariable('ChocolateyInstall', $InstallDir, [EnvironmentVariableTarget]::Machine)
-        $env:Path = [Environment]::GetEnvironmentVariable('Path','Machine')        
+        $env:Path              = [Environment]::GetEnvironmentVariable('Path','Machine')        
         $env:ChocolateyInstall = $InstallDir
 	}
 }
