@@ -26,8 +26,9 @@ $env:PSModulePath = $env:PSModulePath + ";" + "C:\projects"
 #---------------------------------# 
 # Validate                        # 
 #---------------------------------# 
+$RequiredModules = 'PSScriptAnalyzer','Pester','xDSCResourceDesigner'
 $InstalledModules = Get-Module -Name $RequiredModules -ListAvailable
-if ($InstalledModules.count -lt $RequiredModules.Count) { 
+if ( ($InstalledModules.count -lt $RequiredModules.Count) -or ($Null -eq $InstalledModules)) { 
   throw "Required modules are missing."
 } else {
   Write-Host 'All modules required found' -ForegroundColor Green

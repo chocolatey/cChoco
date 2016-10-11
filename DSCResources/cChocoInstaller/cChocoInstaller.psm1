@@ -163,7 +163,8 @@ Function Install-Chocolatey {
     #Set permanent EnvironmentVariable
     Write-Verbose 'Setting ChocolateyInstall environment variables'
     [Environment]::SetEnvironmentVariable('ChocolateyInstall', $InstallDir, [EnvironmentVariableTarget]::Machine)
-    $env:ChocolateyInstall =  $InstallDir
+    $env:ChocolateyInstall = [Environment]::GetEnvironmentVariable('ChocolateyInstall','Machine')   
+    Write-Verbose "Env:ChocolateyInstall has $env:ChocolateyInstall" 
     
     #Download an execute install script    
     $file = Join-Path -Path $InstallDir -ChildPath 'install.ps1'
