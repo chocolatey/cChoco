@@ -1,4 +1,7 @@
-[![Build status](https://ci.appveyor.com/api/projects/status/qma3jnh23w5vjt46?svg=true)](https://ci.appveyor.com/project/LawrenceGripper/cchoco)
+| Branch        | Status        |
+| ------------- | ------------- |
+| master        | [![Build status](https://ci.appveyor.com/api/projects/status/qma3jnh23w5vjt46/branch/master?svg=true&passingText=master%20-%20OK&pendingText=master%20-%20PENDING&failingText=master%20-%20FAILED)](https://ci.appveyor.com/project/LawrenceGripper/cchoco/branch/master) |
+| dev           | [![Build status](https://ci.appveyor.com/api/projects/status/qma3jnh23w5vjt46/branch/dev?svg=true&passingText=dev%20-%20OK&pendingText=dev%20-%20PENDING&failingText=dev%20-%20FAILED)](https://ci.appveyor.com/project/LawrenceGripper/cchoco/branch/dev) |
 
 Community Chocolatey DSC Resource
 =============================
