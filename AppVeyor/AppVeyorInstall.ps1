@@ -13,8 +13,9 @@ Write-Host "Installed NuGet version '$($pkg.version)'"
 #---------------------------------# 
 # Install Modules                 # 
 #---------------------------------# 
-$RequiredModules = 'PSScriptAnalyzer','Pester','xDSCResourceDesigner'
-Install-Module -Name $RequiredModules -Repository PSGallery -Force -ErrorAction Stop
+[version]$ScriptAnalyzerVersion = '1.8.0'
+Install-Module -Name 'PSScriptAnalyzer' -Repository PSGallery -Force -ErrorAction Stop -MaximumVersion $ScriptAnalyzerVersion
+Install-Module -Name 'Pester','xDSCResourceDesigner' -Repository PSGallery -Force -ErrorAction Stop
 
 #---------------------------------# 
 # Update PSModulePath             # 
@@ -25,8 +26,9 @@ $env:PSModulePath = $env:PSModulePath + ";" + "C:\projects"
 #---------------------------------# 
 # Validate                        # 
 #---------------------------------# 
+$RequiredModules = 'PSScriptAnalyzer','Pester','xDSCResourceDesigner'
 $InstalledModules = Get-Module -Name $RequiredModules -ListAvailable
-if ($InstalledModules.count -lt $RequiredModules.Count) { 
+if ( ($InstalledModules.count -lt $RequiredModules.Count) -or ($Null -eq $InstalledModules)) { 
   throw "Required modules are missing."
 } else {
   Write-Host 'All modules required found' -ForegroundColor Green
