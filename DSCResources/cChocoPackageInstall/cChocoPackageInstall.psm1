@@ -366,11 +366,4 @@ function Get-ChocoInstalledPackages {
     Return $res
 }
 
-#Export-ModuleMember -Function *-TargetResource
-
-
-$Scenario2 = @{
-    Name   = 'NotGoogleChrome'
-    Ensure = 'Absent'
-}
-Test-TargetResource @Scenario2 -Verbose
+Export-ModuleMember -Function *-TargetResource
