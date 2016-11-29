@@ -11,7 +11,7 @@ Import-Module -Name $ResourceFile.FullName
 
 Describe -Name "Testing $ResourceName loaded from $ResourceFile" -Fixture {
     Context -Name "Package is not installed" -Fixture {
-        Mock -CommandName 'Get-ChocoInstalledPackages' -ModuleName 'cChocoPackageInstall' -MockWith { 
+        Mock -CommandName 'Get-ChocoInstalledPackage' -ModuleName 'cChocoPackageInstall' -MockWith { 
             return [pscustomobject]@{
                 'Name'    = 'NotGoogleChrome'
                 'Version' = '1.0.0'
@@ -64,7 +64,7 @@ Describe -Name "Testing $ResourceName loaded from $ResourceFile" -Fixture {
     }
 
     Context -Name "Package is installed with version 1.0.0" -Fixture {
-        Mock -CommandName 'Get-ChocoInstalledPackages' -ModuleName 'cChocoPackageInstall' -MockWith { 
+        Mock -CommandName 'Get-ChocoInstalledPackage' -ModuleName 'cChocoPackageInstall' -MockWith { 
             return [pscustomobject]@{
                 'Name'    = 'GoogleChrome'
                 'Version' = '1.0.0'

@@ -263,7 +263,7 @@ function IsPackageInstalled
     $env:Path = [Environment]::GetEnvironmentVariable('Path','Machine')
     Write-Verbose -Message "Path variables: $env:Path"
     
-    $installedPackages = Get-ChocoInstalledPackages
+    $installedPackages = Get-ChocoInstalledPackage
     
     if ($pVersion) {
         Write-Verbose 'Comparing version'
@@ -355,7 +355,7 @@ Function Upgrade-Package {
     $packageUpgradeOuput | ForEach-Object { Write-Verbose -Message $_ }
 }
 
-function Get-ChocoInstalledPackages {
+function Get-ChocoInstalledPackage {
     $res = choco list -lo | ForEach-Object {
         $Obj = $_ -split '\s'
         [pscustomobject]@{
