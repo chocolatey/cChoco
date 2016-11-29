@@ -22,7 +22,7 @@ Describe -Name "Testing $ResourceName loaded from $ResourceFile" -Fixture {
             Name   = 'GoogleChrome'
             Ensure = 'Present'
         }
-        It -name "Test-TargetResource -ensure 'present' should return False" -test {
+        It -name "Test-TargetResource -ensure 'Present' should return False" -test {
             Test-TargetResource @Scenario1 | Should Be $False
         }
 
@@ -75,7 +75,7 @@ Describe -Name "Testing $ResourceName loaded from $ResourceFile" -Fixture {
             Name   = 'GoogleChrome'
             Ensure = 'Present'
         }
-        It -name "Test-TargetResource -ensure 'present' should return True" -test {
+        It -name "Test-TargetResource -ensure 'Present' should return True" -test {
             Test-TargetResource @Scenario1 | Should Be $True
         }
 
