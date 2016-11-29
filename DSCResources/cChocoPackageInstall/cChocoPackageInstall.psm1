@@ -196,10 +196,14 @@ function InstallPackage
 {
     [Diagnostics.CodeAnalysis.SuppressMessage('PSAvoidUsingInvokeExpression')]
     param(
-        [Parameter(Position=0,Mandatory)][string]$pName,
-        [Parameter(Position=1,Mandatory)][string]$pParams,
-        [Parameter(Position=2,Mandatory)][string]$pVersion,
-        [Parameter(Position=3,Mandatory)][string]$cParams
+        [Parameter(Position=0,Mandatory)]
+        [string]$pName,
+        [Parameter(Position=1)]
+        [string]$pParams,
+        [Parameter(Position=2)]
+        [string]$pVersion,
+        [Parameter(Position=3)]
+        [string]$cParams
     ) 
 
     $env:Path = [Environment]::GetEnvironmentVariable('Path','Machine')
@@ -226,8 +230,10 @@ function InstallPackage
 function UninstallPackage 
 {
     param(
-        [Parameter(Position=0,Mandatory)][string]$pName,
-        [Parameter(Position=1,Mandatory)][string]$pParams
+        [Parameter(Position=0,Mandatory)]
+        [string]$pName,
+        [Parameter(Position=1)]
+        [string]$pParams
     )
 
     $env:Path = [Environment]::GetEnvironmentVariable('Path','Machine')
