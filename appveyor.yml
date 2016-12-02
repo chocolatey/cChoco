@@ -1,10 +1,8 @@
 #---------------------------------# 
 #      environment configuration  # 
 #---------------------------------# 
-version: 2.2.0.{build}
+version: 2.3.0.{build}
 os: WMF 5
-clone_folder: c:\projects\cChoco
-
 install:
   - ps: . .\AppVeyor\AppVeyorInstall.ps1
 
