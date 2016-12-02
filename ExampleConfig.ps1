@@ -1,4 +1,4 @@
-﻿Configuration myChocoConfig
+Configuration myChocoConfig
 {
    Import-DscResource -Module cChoco  
    Node "localhost"
@@ -13,17 +13,10 @@
       }
       cChocoPackageInstaller installChrome
       {
-        Name = "googlechrome"
-        DependsOn = "[cChocoInstaller]installChoco"
-		
-      }
-      cChocoPackageInstaller installSkypeWithChocoParams
-      {
-        Name                 = 'skype'
-        chocoParams          = '--allowdowngrade --allowemptychecksum --allowemptychecksumsecure'
-        Ensure               = 'Present'
-        Version              = '7.25.0.106'
-        DependsOn            = '[cChocoInstaller]installChoco'
+        Name        = "googlechrome"
+        DependsOn   = "[cChocoInstaller]installChoco"
+        #This will automatically try to upgrade if available, only if a version is not explicitly specified. 
+        AutoUpgrade = $True
       }
       cChocoPackageInstaller installAtomSpecificVersion
       {
@@ -35,7 +28,7 @@
       {
          Ensure = 'Present'
          Name = "git"
-         Params = "/Someparam-passed-to-installer " 
+         Params = "/Someparam "
          DependsOn = "[cChocoInstaller]installChoco"
       }
       cChocoPackageInstaller noFlashAllowed
@@ -48,7 +41,8 @@
       {
          Ensure = 'Present'
          Name = @(
-			"git",
+			"git"
+			"skype"
 			"7zip"
 		)
          DependsOn = "[cChocoInstaller]installChoco"
@@ -57,8 +51,8 @@
       {
          Ensure = 'Absent'
          Name = @(
-			"vlc",
-			"ruby",
+			"vlc"
+			"ruby"
 			"adobeair"
 		)
          DependsOn = "[cChocoInstaller]installChoco"

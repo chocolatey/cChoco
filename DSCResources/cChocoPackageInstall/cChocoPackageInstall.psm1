@@ -79,7 +79,7 @@ function Set-TargetResource
                 UninstallPackage -pName $Name -pParams $Params
             }    
         } else {
-            $whatIfShouldProcess = $pscmdlet.ShouldProcess("$Name", 'Install package from Chocolatey')
+            $whatIfShouldProcess = $pscmdlet.ShouldProcess("$Name", 'Installing / upgrading package from Chocolatey')
             if ($whatIfShouldProcess) {
                 if ($Version) {
                     Write-Verbose -Message "Uninstalling $Name due to version mis-match"
@@ -87,6 +87,7 @@ function Set-TargetResource
                     Write-Verbose -Message "Re-Installing $Name with correct version $version"
                     InstallPackage -pName $Name -pParams $Params -pVersion $Version -cParams $chocoParams            
                 } elseif ($AutoUpgrade) {
+                    Write-Verbose -Message "Upgrading $Name due to version mis-match"
                     Upgrade-Package -pName $Name -pParams $Params
                 }
             }
@@ -194,7 +195,7 @@ Function Test-Command
 
 function InstallPackage
 {
-    [Diagnostics.CodeAnalysis.SuppressMessage('PSAvoidUsingInvokeExpression')]
+    [Diagnostics.CodeAnalysis.SuppressMessage('PSAvoidUsingInvokeExpression','')]
     param(
         [Parameter(Position=0,Mandatory)]
         [string]$pName,
@@ -328,8 +329,8 @@ function global:Write-Host
 }
 
 Function Upgrade-Package {
-    [Diagnostics.CodeAnalysis.SuppressMessage('PSUseApprovedVerbs')]
-    [Diagnostics.CodeAnalysis.SuppressMessage('PSAvoidUsingInvokeExpression')]
+    [Diagnostics.CodeAnalysis.SuppressMessage('PSUseApprovedVerbs','')]
+    [Diagnostics.CodeAnalysis.SuppressMessage('PSAvoidUsingInvokeExpression','')]
     param(
         [Parameter(Position=0,Mandatory)]
         [string]$pName,
@@ -373,3 +374,5 @@ function Get-ChocoInstalledPackage {
 }
 
 Export-ModuleMember -Function *-TargetResource
+
+Upgrade-Package -pName vlc -pParams $null
