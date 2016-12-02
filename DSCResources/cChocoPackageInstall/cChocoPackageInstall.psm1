@@ -374,5 +374,3 @@ function Get-ChocoInstalledPackage {
 }
 
 Export-ModuleMember -Function *-TargetResource
-
-Upgrade-Package -pName vlc -pParams $null
