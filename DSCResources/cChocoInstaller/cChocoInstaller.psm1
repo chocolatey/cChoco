@@ -1,12 +1,11 @@
 function Get-TargetResource
 {
-    [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
+    [OutputType([hashtable])]
     param
     (
-        [parameter(Mandatory = $true)]
+        [parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
-        [System.String]
+        [string]
         $InstallDir,
         [parameter(Mandatory = $false)]
         [ValidateNotNullOrEmpty()]
@@ -16,39 +15,28 @@ function Get-TargetResource
         [System.String]
         $ChocoDownloadUrl
 
+
     )
-    Write-Verbose " Start Get-TargetResource"
+    Write-Verbose 'Start Get-TargetResource'
 
-
-    #Needs to return a hashtable that returns the current
-    #status of the configuration component
+    #Needs to return a hashtable that returns the current status of the configuration component
     $Configuration = @{
-        InstallDir = $env:ChocolateyInstall
+        InstallDir            = $env:ChocolateyInstall
         ChocoInstallScriptUrl = $ChocoInstallScriptUrl
         ChocoDownloadUrl = $ChocoDownloadUrl
     }
 
-    if (-not (IsChocoInstalled))
-    {
-        #$Configuration.Ensure = "Absent"
-        Return $Configuration
-    }
-    else
-    {
-        #$Configuration.Ensure = "Present"
-        Return $Configuration
-
-    }
+    Return $Configuration
 }
 
 function Set-TargetResource
 {
-    [CmdletBinding()]    
+    [CmdletBinding(SupportsShouldProcess)]
     param
     (
-        [parameter(Mandatory = $true)]
+        [parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
-        [System.String]
+        [string]
         $InstallDir,
         [parameter(Mandatory = $false)]
         [ValidateNotNullOrEmpty()]
@@ -82,25 +70,26 @@ function Set-TargetResource
         #InstallChoco $InstallDir
         Write-Verbose '[ChocoInstaller] Finish InstallChoco'
 
-        #refresh path varaible in powershell, as choco doesn"t, to pull in git
+
+        [parameter()]
+        [string]
+        $ChocoInstallScriptUrl = 'https://chocolatey.org/install.ps1'
+    )
+    Write-Verbose 'Start Set-TargetResource'
+    $whatIfShouldProcess = $pscmdlet.ShouldProcess('Chocolatey', 'Download and Install')
+    if ($whatIfShouldProcess) {
+        Install-Chocolatey @PSBoundParameters
     }
-	elseif((-not ($InstallDir -eq $env:ChocolateyInstall)) -and (Test-Path "$($InstallDir)\choco.exe"))
-	{
-		[Environment]::SetEnvironmentVariable("ChocolateyInstall", $InstallDir, [EnvironmentVariableTarget]::Machine)
-        $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine")        
-        $env:ChocolateyInstall = $InstallDir
-	}
 }
 
 function Test-TargetResource
 {
-    [CmdletBinding()]
-    [OutputType([System.Boolean])]
+    [OutputType([bool])]
     param
     (
-        [parameter(Mandatory = $true)]
+        [parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
-        [System.String]
+        [string]
         $InstallDir,
         [parameter(Mandatory = $false)]
         [ValidateNotNullOrEmpty()]
@@ -109,76 +98,63 @@ function Test-TargetResource
         [parameter(Mandatory = $false)]
         [System.String]
         $ChocoDownloadUrl
+
     )
 
-    Write-Verbose " Start Test-TargetResource"
-
-    if (-not (IsChocoInstalled))
+    Write-Verbose 'Test-TargetResource'
+    if (-not (Test-ChocoInstalled))
     {
+        Write-Verbose 'Choco is not installed, calling set'
         Return $false
     }
-    ##Test to see if the Install Directory is right.
+  
+    ##Test to see if the Install Directory is correct.
+    $env:ChocolateyInstall = [Environment]::GetEnvironmentVariable('ChocolateyInstall','Machine')
     if(-not ($InstallDir -eq $env:ChocolateyInstall)) 
     {
+        Write-Verbose "Choco should be installed in $InstallDir but is installed to $env:ChocolateyInstall calling set"
         Return $false
     }
 
     Return $true
 }
 
-function IsChocoInstalled
+function Test-ChocoInstalled
 {
+    Write-Verbose 'Test-ChocoInstalled'
+    $env:Path = [Environment]::GetEnvironmentVariable('Path','Machine')
 
-    Write-Verbose " Is choco installed? "
-
-    $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine")
-
-    if (DoesCommandExist choco)
+    Write-Verbose "Env:Path contains: $env:Path"
+    if (Test-Command -command choco)
     {
-        Write-Verbose " YES - Choco is Installed"
-
+        Write-Verbose 'YES - Choco is Installed'
         return $true
     }
 
-    Write-Verbose " NO - Choco isn't Installed"
-
+    Write-Verbose "NO - Choco is not Installed"
     return $false
-
-    
 }
 
-function DoesCommandExist
+Function Test-Command
 {
-    Param ($command)
-
-    $oldPreference = $ErrorActionPreference
-    $ErrorActionPreference = 'stop'
-
-    try 
-    {
-        if(Get-Command $command)
-        {
-            return $true
-        }
-    }
-    Catch 
-    {
+    Param (
+        [string]$command = 'choco' 
+    )
+    Write-Verbose "Test-Command $command"
+    if (Get-Command -Name $command -ErrorAction SilentlyContinue) {
+        Write-Verbose "$command exists"
+        return $true
+    } else {
+        Write-Verbose "$command does NOT exist"
         return $false
-    }
-    Finally {
-        $ErrorActionPreference=$oldPreference
-    }
+    } 
 } 
 
-
-##region - chocolately installer work arounds. Main issue is use of write-host
-##attempting to work around the issues with Chocolatey calling Write-host in its scripts. 
+#region - chocolately installer work arounds. Main issue is use of write-host
 function global:Write-Host
 {
-    [CmdletBinding()]
     Param(
-        [Parameter(Mandatory = $true, Position = 0)]
-        [Object]
+        [Parameter(Mandatory,Position = 0)]
         $Object,
         [Switch]
         $NoNewLine,
@@ -186,24 +162,70 @@ function global:Write-Host
         $ForegroundColor,
         [ConsoleColor]
         $BackgroundColor
-
     )
-
-    #Override default Write-Host...
+    #Redirecting Write-Host -> Write-Verbose. 
     Write-Verbose $Object
 }
+#endregion
 
-function Download-File {
-param (
-  [string]$url,
-  [string]$file
- )
-  Write-Output "Downloading $url to $file"
-  $downloader = new-object System.Net.WebClient
+function Get-FileDownload {
+    param (
+        [parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
+        [string]$url,
+        
+        [parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
+        [string]$file
+    )
+    Write-Verbose "Downloading $url to $file"
+    $downloader = new-object -TypeName System.Net.WebClient
+    $downloader.DownloadFile($url, $file)
+}
 
-  $defaultCreds = [System.Net.CredentialCache]::DefaultCredentials
+Function Install-Chocolatey {
+    [CmdletBinding()]
+    param
+    (
+        [parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
+        [string]
+        $InstallDir,
 
-  $downloader.DownloadFile($url, $file)
+        [parameter()]
+        [string]
+        $ChocoInstallScriptUrl = 'https://chocolatey.org/install.ps1'
+    )    
+    Write-Verbose 'Install-Chocolatey'
+
+    #Create install directory if it does not exist
+    If(-not (Test-Path -Path $InstallDir)) {
+        Write-Verbose "[ChocoInstaller] Creating $InstallDir"
+        New-Item -Path $InstallDir -ItemType Directory
+    }
+
+    #Set permanent EnvironmentVariable
+    Write-Verbose 'Setting ChocolateyInstall environment variables'
+    [Environment]::SetEnvironmentVariable('ChocolateyInstall', $InstallDir, [EnvironmentVariableTarget]::Machine)
+    $env:ChocolateyInstall = [Environment]::GetEnvironmentVariable('ChocolateyInstall','Machine')   
+    Write-Verbose "Env:ChocolateyInstall has $env:ChocolateyInstall" 
+    
+    #Download an execute install script    
+    $file = Join-Path -Path $InstallDir -ChildPath 'install.ps1'
+    Get-FileDownload -url $ChocoInstallScriptUrl -file $file
+    . $file
+
+    #refresh after install
+    Write-Verbose 'Adding Choco to path'
+    $env:Path = [Environment]::GetEnvironmentVariable('Path','Machine')   
+    if ($env:path -notlike "*$InstallDir*") {
+        $env:Path += ";$InstallDir"
+    }
+    
+    Write-Verbose "Env:Path has $env:path"    
+    #InstallChoco $InstallDir
+    $Null = Choco
+    Write-Verbose 'Finish InstallChoco'
 }
 
 Export-ModuleMember -Function *-TargetResource

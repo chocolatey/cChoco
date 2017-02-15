@@ -1,4 +1,4 @@
-﻿Configuration myChocoConfig
+Configuration myChocoConfig
 {
    Import-DscResource -Module cChoco  
    Node "localhost"
@@ -13,9 +13,10 @@
       }
       cChocoPackageInstaller installChrome
       {
-        Name = "googlechrome"
-        DependsOn = "[cChocoInstaller]installChoco"
-		
+        Name        = "googlechrome"
+        DependsOn   = "[cChocoInstaller]installChoco"
+        #This will automatically try to upgrade if available, only if a version is not explicitly specified. 
+        AutoUpgrade = $True
       }
       cChocoPackageInstaller installAtomSpecificVersion
       {
