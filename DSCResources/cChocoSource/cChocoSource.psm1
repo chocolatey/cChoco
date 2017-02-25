@@ -142,8 +142,15 @@ function Test-TargetResource
 	foreach($chocosource in $sources)
 	{
 		if($chocosource.id -eq $name -and $ensure -eq 'Present')
-		{		
-			return $true
+		{
+            if ($chocosource.priority -eq $Priority)
+            {
+                return $true
+            }
+            else
+            {
+                return $false
+            }
 		}
 		elseif($chocosource.id -eq $name -and $ensure -eq 'Absent')
 		{
