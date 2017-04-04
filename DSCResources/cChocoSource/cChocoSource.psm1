@@ -134,7 +134,7 @@ function Test-TargetResource
 		$chocofolder = $env:ChocolateyInstall
 	}
 	$configfolder = "$chocofolder\config"
-	$configfile = Get-ChildItem $configfolder | Where-Object {$_.Name -match "chocolatey.config"}
+	$configfile = Get-ChildItem $configfolder | Where-Object {$_.Name -match "chocolatey.config$"}
 
 	$xml = [xml](Get-Content $configfile.FullName)
 	$sources = $xml.chocolatey.sources.source
