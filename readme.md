@@ -6,6 +6,8 @@
 Community Chocolatey DSC Resource
 =============================
 
+[![Join the chat at https://gitter.im/chocolatey/cChoco](https://badges.gitter.im/chocolatey/cChoco.svg)](https://gitter.im/chocolatey/cChoco?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 This resource is aimed at getting and installing packages from the choco gallery.
 
 The resource takes the name of the package and will then install that package. 
