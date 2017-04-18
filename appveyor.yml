@@ -1,7 +1,7 @@
-#---------------------------------# 
-#      environment configuration  # 
-#---------------------------------# 
-version: 2.3.0.{build}
+#---------------------------------#
+#      environment configuration  #
+#---------------------------------#
+version: 2.3.1.{build}
 os: WMF 5
 install:
   - ps: . .\AppVeyor\AppVeyorInstall.ps1
@@ -12,20 +12,20 @@ environment:
   github_access_token:
     secure: Xk7jTkdE82qskQy9WPZK0zSafSjT6gK1SYxH8m4Aa8muCMQ4ACkkztJ3toh9DFlS
   ModuleName: cChoco
-#---------------------------------# 
-#      build configuration        # 
-#---------------------------------# 
-build_script: 
+#---------------------------------#
+#      build configuration        #
+#---------------------------------#
+build_script:
   - ps: . .\AppVeyor\AppVeyorBuild.ps1
 
-#---------------------------------# 
-#      test configuration         # 
-#---------------------------------# 
-test_script: 
+#---------------------------------#
+#      test configuration         #
+#---------------------------------#
+test_script:
   - ps: . .\AppVeyor\AppVeyorTest.ps1
 
-#---------------------------------# 
-#      deployment configuration   # 
-#---------------------------------# 
-deploy_script: 
+#---------------------------------#
+#      deployment configuration   #
+#---------------------------------#
+deploy_script:
   - ps: . .\AppVeyor\AppveyorDeploy.ps1
