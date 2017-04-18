@@ -1,4 +1,4 @@
-@{
+﻿@{
 	Copyright         = "(c) 2017 Chocolatey Software, (c) 2013-2017 Lawrence Gripper, All rights reserved.";
 	Description       = "Chocolatey DSC Resources for use with internal packages and the community package repository. Learn more at http://chocolatey.org/";
 	CompanyName       = "Chocolatey Software";

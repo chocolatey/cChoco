@@ -1,4 +1,4 @@
-function Get-TargetResource
+﻿function Get-TargetResource
 {
     [OutputType([hashtable])]
     param
