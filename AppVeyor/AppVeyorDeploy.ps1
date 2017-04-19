@@ -18,7 +18,7 @@ Write-Host "Updating module manifest to version: $env:APPVEYOR_BUILD_VERSION"
 # Publish to PS Gallery           #
 #---------------------------------#
 
-if ( ($env:APPVEYOR_REPO_NAME -notmatch 'chocolatey') -or ($env:APPVEYOR_REPO_BRANCH -notmatch 'master') )
+if ( ($env:APPVEYOR_REPO_NAME -notmatch 'chocolatey') -or (!$env:APPVEYOR_REPO_TAG_NAME) )
 {
     Write-Host "Finished testing of branch: $env:APPVEYOR_REPO_BRANCH - Exiting"
     exit;
