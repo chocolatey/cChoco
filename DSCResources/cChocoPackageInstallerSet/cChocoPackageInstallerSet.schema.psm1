@@ -1,4 +1,4 @@
-Configuration cChocoPackageInstallerSet
+﻿Configuration cChocoPackageInstallerSet
 {
 <#
 .SYNOPSIS
@@ -14,7 +14,7 @@ Composite DSC Resource allowing you to specify multiple choco packages in a sing
         [ValidateSet('Present','Absent')]
         [System.String]
         $Ensure='Present',
-		[parameter(Mandatory = $false)]
+        [parameter(Mandatory = $false)]
         [ValidateNotNullOrEmpty()]
         [System.String]
         $Source
