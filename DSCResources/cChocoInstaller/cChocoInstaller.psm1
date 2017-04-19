@@ -7,9 +7,15 @@ function Get-TargetResource
         [ValidateNotNullOrEmpty()]
         [string]
         $InstallDir,
-        [parameter()]
-        [string]
-        $ChocoInstallScriptUrl = 'https://chocolatey.org/install.ps1'
+        [parameter(Mandatory = $false)]
+        [ValidateNotNullOrEmpty()]
+        [System.String]
+        $ChocoInstallScriptUrl = "https://chocolatey.org/install.ps1",
+        [parameter(Mandatory = $false)]
+        [System.String]
+        $ChocoDownloadUrl
+
+
     )
     Write-Verbose 'Start Get-TargetResource'
 
@@ -17,6 +23,7 @@ function Get-TargetResource
     $Configuration = @{
         InstallDir            = $env:ChocolateyInstall
         ChocoInstallScriptUrl = $ChocoInstallScriptUrl
+        ChocoDownloadUrl = $ChocoDownloadUrl
     }
 
     Return $Configuration
@@ -31,6 +38,38 @@ function Set-TargetResource
         [ValidateNotNullOrEmpty()]
         [string]
         $InstallDir,
+        [parameter(Mandatory = $false)]
+        [ValidateNotNullOrEmpty()]
+        [System.String]
+        $ChocoInstallScriptUrl = "https://chocolatey.org/install.ps1",
+        [parameter(Mandatory = $false)]
+        [System.String]
+        $ChocoDownloadUrl
+    )
+    Write-Verbose " Start Set-TargetResource"
+    
+    if (-not (DoesCommandExist choco) -or -not (IsChocoInstalled))
+    {
+        #$env:Path = [System.Environment]::GetEnvironmentVariable('Path','Machine')
+
+        Write-Verbose '[ChocoInstaller] Start InstallChoco'
+        If(-not (Test-Path -Path $InstallDir)) {
+            New-Item -Path $InstallDir -ItemType Directory
+        }
+        $file = Join-Path $InstallDir "install.ps1"
+        [Environment]::SetEnvironmentVariable("ChocolateyInstall", $InstallDir, [EnvironmentVariableTarget]::Machine)
+        if ($ChocoDownloadUrl) {
+            [Environment]::SetEnvironmentVariable("ChocolateyDownloadUrl", $ChocoDownloadUrl, [System.EnvironmentVariableTarget]::Machine)
+        }
+        $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine")        
+        
+        $env:ChocolateyInstall = $InstallDir
+        Download-File $ChocoInstallScriptUrl $file
+        . $file
+        
+        #InstallChoco $InstallDir
+        Write-Verbose '[ChocoInstaller] Finish InstallChoco'
+
 
         [parameter()]
         [string]
@@ -52,9 +91,14 @@ function Test-TargetResource
         [ValidateNotNullOrEmpty()]
         [string]
         $InstallDir,
-        [parameter()]
-        [string]
-        $ChocoInstallScriptUrl = 'https://chocolatey.org/install.ps1'
+        [parameter(Mandatory = $false)]
+        [ValidateNotNullOrEmpty()]
+        [System.String]
+        $ChocoInstallScriptUrl = "https://chocolatey.org/install.ps1",
+        [parameter(Mandatory = $false)]
+        [System.String]
+        $ChocoDownloadUrl
+
     )
 
     Write-Verbose 'Test-TargetResource'
