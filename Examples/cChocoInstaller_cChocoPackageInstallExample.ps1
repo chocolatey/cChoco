@@ -8,6 +8,7 @@
             Name                 = 'skype'
             Ensure               = 'Present'
             AutoUpgrade          = $True       
+            Version              = 7.35.0.101
         }
     }
 } 
