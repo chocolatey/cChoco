@@ -85,17 +85,17 @@ function Set-TargetResource
                     Write-Verbose -Message "Uninstalling $Name due to version mis-match"
                     UninstallPackage -pName $Name -pParams $Params
                     Write-Verbose -Message "Re-Installing $Name with correct version $version"
-                    InstallPackage -pName $Name -pParams $Params -pVersion $Version -cParams $chocoParams            
+                    InstallPackage -pName $Name -pParams $Params -pVersion $Version -pSource $Source -cParams $chocoParams
                 } elseif ($AutoUpgrade) {
                     Write-Verbose -Message "Upgrading $Name due to version mis-match"
-                    Upgrade-Package -pName $Name -pParams $Params
+                    Upgrade-Package -pName $Name -pParams $Params -pSource $Source
                 }
             }
         }
     } else {
         $whatIfShouldProcess = $pscmdlet.ShouldProcess("$Name", 'Install package from Chocolatey')
         if ($whatIfShouldProcess) {
-            InstallPackage -pName $Name -pParams $Params -pVersion $Version -cParams $chocoParams 
+            InstallPackage -pName $Name -pParams $Params -pVersion $Version -pSource $Source -cParams $chocoParams
         }
     }
 }
@@ -152,7 +152,7 @@ function Test-TargetResource
         Write-Verbose -Message "Checking if $Name is installed"
 
         if ($AutoUpgrade -and $isInstalled) {
-            $result = Test-LatestVersionInstalled -pName $Name
+            $result = Test-LatestVersionInstalled -pName $Name -pSource $Source
         } else {
             $result = $isInstalled
         }
@@ -204,6 +204,8 @@ function InstallPackage
         [Parameter(Position=2)]
         [string]$pVersion,
         [Parameter(Position=3)]
+        [string]$pSource,
+        [Parameter(Position=4)]
         [string]$cParams
     ) 
 
@@ -215,6 +217,9 @@ function InstallPackage
     }
     if ($pVersion) {
         $chocoinstallparams += " --version=`"$pVersion`""
+    }
+    if ($pSource) {
+        $chocoinstallparams += " --source=`"$pSource`""
     }
     if ($cParams) {
         $chocoinstallparams += " $cParams"
@@ -251,13 +256,11 @@ function UninstallPackage
         $packageUninstallOuput = choco uninstall $pName --params="$pParams" -y            
     }
     
-    
     Write-Verbose -Message "Package uninstall output $packageUninstallOuput "
 
     #refresh path varaible in powershell, as choco doesn"t, to pull in git
     $env:Path = [Environment]::GetEnvironmentVariable('Path','Machine')
 }
-
 
 function IsPackageInstalled
 {
@@ -292,16 +295,26 @@ function IsPackageInstalled
 }
 
 Function Test-LatestVersionInstalled {
+    [Diagnostics.CodeAnalysis.SuppressMessage('PSAvoidUsingInvokeExpression','')]
     param(
-        [Parameter(Position=0,Mandatory)]
-        [string]$pName
+        [Parameter(Mandatory)]
+        [string]$pName,
+        [Parameter(Mandatory)]
+        [string]$pSource
     ) 
     Write-Verbose -Message "Testing if $pName can be upgraded"
 
-    $queryres = choco upgrade $pName --noop | Select-String -Pattern $pName 
-    $queryres | ForEach-Object {Write-Verbose -Message $_} 
+    [string]$chocoupgradeparams = '--noop'
+    if ($pSource) {
+        $chocoupgradeparams += " --source=`"$pSource`""
+    }
+
+    Write-Verbose -Message "Testing if $pName can be upgraded: 'choco upgrade $pName $chocoupgradeparams'"
     
-    if ($queryres -match "$pName.*is the latest version available based on your source") {
+    $packageUpgradeOuput = Invoke-Expression -Command "choco upgrade $pName $chocoupgradeparams"
+    $packageUpgradeOuput | ForEach-Object {Write-Verbose -Message $_} 
+    
+    if ($packageUpgradeOuput -match "$pName.*is the latest version available based on your source") {
         return $true
     } 
     return $false
@@ -337,6 +350,8 @@ Function Upgrade-Package {
         [Parameter(Position=1)]
         [string]$pParams,
         [Parameter(Position=2)]
+        [string]$pSource,
+        [Parameter(Position=3)]
         [string]$cParams
     ) 
 
@@ -347,10 +362,13 @@ Function Upgrade-Package {
     if ($pParams) {
         $chocoupgradeparams += " --params=`"$pParams`""
     }
+    if ($pSource) {
+        $chocoupgradeparams += " --source=`"$pSource`""
+    }
     if ($cParams) {
         $chocoupgradeparams += " $cParams"
     }
-    $cmd = "choco upgrade -dv -y $pName $chocoupgradeparams"
+    $cmd = "choco upgrade $pName $chocoupgradeparams"
     Write-Verbose -Message "Upgrade command: '$cmd'"
 
     if (-not (IsPackageInstalled -pName $pName))
