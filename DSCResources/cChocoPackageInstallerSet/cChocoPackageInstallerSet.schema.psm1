@@ -20,24 +20,11 @@ Composite DSC Resource allowing you to specify multiple choco packages in a sing
         $Source
     )
 
-    $addSource = $Source
-
     foreach ($pName in $Name) {
-        ## We only need to specify the source one time,
-        ## so we do it only with the first package
-        if ($addSource) {
-            cChocoPackageInstaller "cChocoPackageInstaller_$($Ensure)_$($pName)" {
-                Ensure = $Ensure
-                Name = $pName
-                Source = $Source
-            }
-            $addSource = $null
-        }
-        else {
-            cChocoPackageInstaller "cChocoPackageInstaller_$($Ensure)_$($pName)" {
-                Ensure = $Ensure
-                Name = $pName
-            }
+        cChocoPackageInstaller "cChocoPackageInstaller_$($Ensure)_$($pName)" {
+            Ensure = $Ensure
+            Name = $pName
+            Source = $Source
         }
     }
 }
