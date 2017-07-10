@@ -381,14 +381,7 @@ Function Upgrade-Package {
 }
 
 function Get-ChocoInstalledPackage {
-    $res = choco list -lo | ForEach-Object {
-        $Obj = $_ -split '\s'
-        [pscustomobject]@{
-            'Name'    = $Obj[0]
-            'Version' = $Obj[1]     
-        }
-    }
-    Return $res
+    Return (choco list -lo -r | ConvertFrom-Csv -Header 'Name', 'Version' -Delimiter "|")
 }
 
 Export-ModuleMember -Function *-TargetResource
