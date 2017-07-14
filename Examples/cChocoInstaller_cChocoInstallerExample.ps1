@@ -15,7 +15,7 @@
 
 Configuration InstallChoco
 {
-    Import-DscResource -Module cChoco  
+    Import-DscResource -Module cChoco
     Node "localhost"
     {
         cChocoInstaller InstallChoco
@@ -29,7 +29,7 @@ Configuration InstallChoco
             DependsOn            = '[cChocoInstaller]installChoco'
         }
     }
-} 
+}
 
 $config = InstallChoco
 

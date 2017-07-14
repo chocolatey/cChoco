@@ -1,4 +1,5 @@
-﻿#
+﻿
+#
 # Module manifest for module 'cChocoPackageInstallerSet'
 #
 # Generated on: 2016/05/11

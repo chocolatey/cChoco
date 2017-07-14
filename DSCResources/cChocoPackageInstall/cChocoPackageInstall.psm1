@@ -24,7 +24,7 @@ function Get-TargetResource
         $Name,
         [ValidateNotNullOrEmpty()]
         [string]
-        $Params,    
+        $Params,
         [ValidateNotNullOrEmpty()]
         [string]
         $Version,
@@ -59,16 +59,16 @@ function Set-TargetResource
         [parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
         [string]
-        $Name,   
+        $Name,
         [ValidateSet('Present','Absent')]
         [string]
         $Ensure='Present',
         [ValidateNotNullOrEmpty()]
         [string]
-        $Params,    
+        $Params,
         [ValidateNotNullOrEmpty()]
         [string]
-        $Version,   
+        $Version,
         [ValidateNotNullOrEmpty()]
         [string]
         $Source,
@@ -78,7 +78,7 @@ function Set-TargetResource
         $AutoUpgrade = $false
     )
     Write-Verbose -Message 'Start Set-TargetResource'
-	
+
     if (-Not (Test-ChocoInstalled)) {
         throw "cChocoPackageInstall requires Chocolatey to be installed, consider using cChocoInstaller with 'dependson' in dsc config"
     }
@@ -87,12 +87,12 @@ function Set-TargetResource
 
     #Uninstall if Ensure is set to absent and the package is installed
     if ($isInstalled) {
-        if ($Ensure -eq 'Absent') { 
+        if ($Ensure -eq 'Absent') {
             $whatIfShouldProcess = $pscmdlet.ShouldProcess("$Name", 'Remove Chocolatey package')
             if ($whatIfShouldProcess) {
                 Write-Verbose -Message "Removing $Name as ensure is set to absent"
                 UninstallPackage -pName $Name -pParams $Params
-            }    
+            }
         } else {
             $whatIfShouldProcess = $pscmdlet.ShouldProcess("$Name", 'Installing / upgrading package from Chocolatey')
             if ($whatIfShouldProcess) {
@@ -130,7 +130,7 @@ function Test-TargetResource
         $Ensure='Present',
         [ValidateNotNullOrEmpty()]
         [string]
-        $Params,    
+        $Params,
         [ValidateNotNullOrEmpty()]
         [string]
         $Version,
@@ -148,10 +148,10 @@ function Test-TargetResource
 
     if (-Not (Test-ChocoInstalled)) {
         return $false
-    } 
-    
+    }
+
     $isInstalled = IsPackageInstalled -pName $Name
-    
+
     if ($ensure -eq 'Absent') {
          if ($isInstalled -eq $false) {
             return $true
@@ -159,7 +159,7 @@ function Test-TargetResource
             return $false
          }
     }
-    
+
     if ($version) {
         Write-Verbose -Message "Checking if $Name is installed and if version matches $version"
         $result = IsPackageInstalled -pName $Name -pVersion $Version
@@ -172,7 +172,7 @@ function Test-TargetResource
             $result = $isInstalled
         }
     }
-   
+
     Return $result
 }
 function Test-ChocoInstalled
@@ -196,7 +196,7 @@ Function Test-Command
     [CmdletBinding()]
     [OutputType([bool])]
     Param (
-        [string]$command = 'choco' 
+        [string]$command = 'choco'
     )
     Write-Verbose -Message "Test-Command $command"
     if (Get-Command -Name $command -ErrorAction SilentlyContinue) {
@@ -205,8 +205,8 @@ Function Test-Command
     } else {
         Write-Verbose -Message "$command does NOT exist"
         return $false
-    } 
-} 
+    }
+}
 
 function InstallPackage
 {
@@ -222,10 +222,10 @@ function InstallPackage
         [string]$pSource,
         [Parameter(Position=4)]
         [string]$cParams
-    ) 
+    )
 
     $env:Path = [Environment]::GetEnvironmentVariable('Path','Machine')
-    
+
     [string]$chocoinstallparams = '-y'
     if ($pParams) {
         $chocoinstallparams += " --params=`"$pParams`""
@@ -240,7 +240,7 @@ function InstallPackage
         $chocoinstallparams += " $cParams"
     }
     Write-Verbose -Message "Install command: 'choco install $pName $chocoinstallparams'"
-    
+
     $packageInstallOuput = Invoke-Expression -Command "choco install $pName $chocoinstallparams"
     Write-Verbose -Message "Package output $packageInstallOuput "
 
@@ -248,7 +248,7 @@ function InstallPackage
     $env:Path = [Environment]::GetEnvironmentVariable('Path','Machine')
 }
 
-function UninstallPackage 
+function UninstallPackage
 {
     param(
         [Parameter(Position=0,Mandatory)]
@@ -258,7 +258,7 @@ function UninstallPackage
     )
 
     $env:Path = [Environment]::GetEnvironmentVariable('Path','Machine')
-    
+
     #Todo: Refactor
     if (-not ($pParams))
     {
@@ -268,9 +268,9 @@ function UninstallPackage
     elseif ($pParams)
     {
         Write-Verbose -Message "Uninstalling Package with params $pParams"
-        $packageUninstallOuput = choco uninstall $pName --params="$pParams" -y            
+        $packageUninstallOuput = choco uninstall $pName --params="$pParams" -y
     }
-    
+
     Write-Verbose -Message "Package uninstall output $packageUninstallOuput "
 
     #refresh path varaible in powershell, as choco doesn"t, to pull in git
@@ -282,14 +282,14 @@ function IsPackageInstalled
     param(
         [Parameter(Position=0,Mandatory)][string]$pName,
         [Parameter(Position=1)][string]$pVersion
-    ) 
+    )
     Write-Verbose -Message "Start IsPackageInstalled $pName"
 
     $env:Path = [Environment]::GetEnvironmentVariable('Path','Machine')
     Write-Verbose -Message "Path variables: $env:Path"
-    
+
     $installedPackages = Get-ChocoInstalledPackage
-    
+
     if ($pVersion) {
         Write-Verbose 'Comparing version'
         $installedPackages = $installedPackages | Where-object { $_.Name -eq $pName -and $_.Version -eq $pVersion}
@@ -297,7 +297,7 @@ function IsPackageInstalled
         Write-Verbose "Finding packages -eq $pName"
         $installedPackages = $installedPackages | Where-object { $_.Name -eq $pName}
     }
-	
+
     $count = @($installedPackages).Count
     Write-Verbose "Found $Count matching packages"
     if ($Count -gt 0)
@@ -316,7 +316,7 @@ Function Test-LatestVersionInstalled {
         [string]$pName,
         [Parameter(Mandatory)]
         [string]$pSource
-    ) 
+    )
     Write-Verbose -Message "Testing if $pName can be upgraded"
 
     [string]$chocoupgradeparams = '--noop'
@@ -325,18 +325,18 @@ Function Test-LatestVersionInstalled {
     }
 
     Write-Verbose -Message "Testing if $pName can be upgraded: 'choco upgrade $pName $chocoupgradeparams'"
-    
+
     $packageUpgradeOuput = Invoke-Expression -Command "choco upgrade $pName $chocoupgradeparams"
-    $packageUpgradeOuput | ForEach-Object {Write-Verbose -Message $_} 
-    
+    $packageUpgradeOuput | ForEach-Object {Write-Verbose -Message $_}
+
     if ($packageUpgradeOuput -match "$pName.*is the latest version available based on your source") {
         return $true
-    } 
+    }
     return $false
 }
 
 ##region - chocolately installer work arounds. Main issue is use of write-host
-##attempting to work around the issues with Chocolatey calling Write-host in its scripts. 
+##attempting to work around the issues with Chocolatey calling Write-host in its scripts.
 function global:Write-Host
 {
     Param(
@@ -368,11 +368,11 @@ Function Upgrade-Package {
         [string]$pSource,
         [Parameter(Position=3)]
         [string]$cParams
-    ) 
+    )
 
     $env:Path = [Environment]::GetEnvironmentVariable('Path','Machine')
     Write-Verbose -Message "Path variables: $env:Path"
-    
+
     [string]$chocoupgradeparams = '-dv -y'
     if ($pParams) {
         $chocoupgradeparams += " --params=`"$pParams`""
@@ -389,8 +389,8 @@ Function Upgrade-Package {
     if (-not (IsPackageInstalled -pName $pName))
     {
         throw "$pName is not installed, you cannot upgrade"
-    }    
-    
+    }
+
     $packageUpgradeOuput = Invoke-Expression -Command $cmd
     $packageUpgradeOuput | ForEach-Object { Write-Verbose -Message $_ }
 }
@@ -400,7 +400,7 @@ function Get-ChocoInstalledPackage {
         $Obj = $_ -split '\s'
         [pscustomobject]@{
             'Name'    = $Obj[0]
-            'Version' = $Obj[1]     
+            'Version' = $Obj[1]
         }
     }
     Return $res

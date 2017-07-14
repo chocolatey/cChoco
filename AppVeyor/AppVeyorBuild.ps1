@@ -26,7 +26,7 @@ Write-Host "PSModulePath  :"
 
 $env:PSModulePath -split ';'
 
-#---------------------------------# 
-# BuildScript                     # 
-#---------------------------------# 
+#---------------------------------#
+# BuildScript                     #
+#---------------------------------#
 Write-Host 'Nothing to build, skipping.....'

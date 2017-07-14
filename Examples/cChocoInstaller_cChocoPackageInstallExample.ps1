@@ -15,18 +15,18 @@
 
 Configuration InstallChoco
 {
-    Import-DscResource -Module cChoco  
+    Import-DscResource -Module cChoco
     Node "localhost"
     {
         cChocoPackageInstaller installSkypeWithChocoParams
         {
             Name                 = 'skype'
             Ensure               = 'Present'
-            AutoUpgrade          = $True       
+            AutoUpgrade          = $True
             Version              = 7.35.0.101
         }
     }
-} 
+}
 
 $config = InstallChoco
 

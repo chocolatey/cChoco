@@ -15,14 +15,14 @@
 
 function Get-TargetResource
 {
-    [CmdletBinding()] 
+    [CmdletBinding()]
     [OutputType([System.Collections.Hashtable])]
     param
     (
         [parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
         [System.String]
-        $Name,   
+        $Name,
         [ValidateSet('Present','Absent')]
         [System.String]
         $Ensure='Present',
@@ -52,13 +52,13 @@ function Get-TargetResource
 
 function Set-TargetResource
 {
-    [CmdletBinding()]    
+    [CmdletBinding()]
     param
     (
         [parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
         [System.String]
-        $Name,   
+        $Name,
         [ValidateSet('Present','Absent')]
         [System.String]
         $Ensure='Present',
@@ -91,7 +91,7 @@ function Set-TargetResource
 		{
 			$username = $Credentials.UserName
 			$password = $Credentials.GetNetworkCredential().Password
-			
+
 			if($priority -eq $null)
 			{
 				choco sources add -n"$name" -s"$source" -u="$username" -p="$password"
@@ -117,7 +117,7 @@ function Test-TargetResource
         [parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
         [System.String]
-        $Name,   
+        $Name,
         [ValidateSet('Present','Absent')]
         [System.String]
         $Ensure='Present',
@@ -133,9 +133,9 @@ function Test-TargetResource
     )
 
     Write-Verbose "Start Test-TargetResource"
-	
+
 	if($env:ChocolateyInstall -eq "" -or $env:ChocolateyInstall -eq $null)
-	{	
+	{
 		$exe = (get-command choco).Source
 		$chocofolder = $exe.Substring(0,$exe.LastIndexOf("\"))
 
@@ -172,7 +172,7 @@ function Test-TargetResource
 			return $false
 		}
 	}
-	
+
 	if($Ensure -eq 'Present')
 	{
 		return $false

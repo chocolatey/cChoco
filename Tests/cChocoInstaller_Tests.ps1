@@ -23,6 +23,6 @@ Describe "Testing $ResourceName loaded from $ResourceFile" {
   Context “Testing 'Get-TargetResource'” {
     It 'DummyTest $true should be $true' {
       $true | Should Be $true
-    }    
+    }
   }
 }
