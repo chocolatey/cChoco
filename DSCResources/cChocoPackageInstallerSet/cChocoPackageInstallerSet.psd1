@@ -1,4 +1,5 @@
-﻿#
+﻿
+#
 # Module manifest for module 'cChocoPackageInstallerSet'
 #
 # Generated on: 2016/05/11
@@ -16,13 +17,13 @@ ModuleVersion = '2.1.0.0'
 GUID = '028ba992-9429-4a6b-9c99-17eb4999cb23'
 
 # Author of this module
-Author = 'Lawrence Gripper'
+Author = 'Chocolatey Software, Lawrence Gripper, Javy de Koning'
 
 # Company or vendor of this module
-CompanyName = 'Lawrence Gripper'
+CompanyName = 'Chocolatey Software, Inc'
 
 # Copyright statement for this module
-Copyright = '(c) 2013-2016 Lawrence Gripper. All rights reserved.'
+Copyright = '(c) 2017 Chocolatey Software, Inc (c) 2013-2017 Lawrence Gripper, All rights reserved.'
 
 # Description of the functionality provided by this module
 # Description = 'Allows install/uninstall of a group of choco packages.'

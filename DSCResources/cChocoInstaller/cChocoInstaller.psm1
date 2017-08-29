@@ -1,3 +1,18 @@
+﻿# Copyright (c) 2017 Chocolatey Software, Inc.
+# Copyright (c) 2013 - 2017 Lawrence Gripper & original authors/contributors from https://github.com/chocolatey/cChoco
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 function Get-TargetResource
 {
     [OutputType([hashtable])]
@@ -63,10 +78,10 @@ function Test-TargetResource
         Write-Verbose 'Choco is not installed, calling set'
         Return $false
     }
-  
+
     ##Test to see if the Install Directory is correct.
     $env:ChocolateyInstall = [Environment]::GetEnvironmentVariable('ChocolateyInstall','Machine')
-    if(-not ($InstallDir -eq $env:ChocolateyInstall)) 
+    if(-not ($InstallDir -eq $env:ChocolateyInstall))
     {
         Write-Verbose "Choco should be installed in $InstallDir but is installed to $env:ChocolateyInstall calling set"
         Return $false
@@ -94,7 +109,7 @@ function Test-ChocoInstalled
 Function Test-Command
 {
     Param (
-        [string]$command = 'choco' 
+        [string]$command = 'choco'
     )
     Write-Verbose "Test-Command $command"
     if (Get-Command -Name $command -ErrorAction SilentlyContinue) {
@@ -103,8 +118,8 @@ Function Test-Command
     } else {
         Write-Verbose "$command does NOT exist"
         return $false
-    } 
-} 
+    }
+}
 
 #region - chocolately installer work arounds. Main issue is use of write-host
 function global:Write-Host
@@ -119,7 +134,7 @@ function global:Write-Host
         [ConsoleColor]
         $BackgroundColor
     )
-    #Redirecting Write-Host -> Write-Verbose. 
+    #Redirecting Write-Host -> Write-Verbose.
     Write-Verbose $Object
 }
 #endregion
@@ -129,7 +144,7 @@ function Get-FileDownload {
         [parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
         [string]$url,
-        
+
         [parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
         [string]$file
@@ -159,7 +174,7 @@ Function Install-Chocolatey {
         [parameter()]
         [string]
         $ChocoInstallScriptUrl = 'https://chocolatey.org/install.ps1'
-    )    
+    )
     Write-Verbose 'Install-Chocolatey'
 
     #Create install directory if it does not exist
@@ -171,22 +186,22 @@ Function Install-Chocolatey {
     #Set permanent EnvironmentVariable
     Write-Verbose 'Setting ChocolateyInstall environment variables'
     [Environment]::SetEnvironmentVariable('ChocolateyInstall', $InstallDir, [EnvironmentVariableTarget]::Machine)
-    $env:ChocolateyInstall = [Environment]::GetEnvironmentVariable('ChocolateyInstall','Machine')   
-    Write-Verbose "Env:ChocolateyInstall has $env:ChocolateyInstall" 
-    
-    #Download an execute install script    
+    $env:ChocolateyInstall = [Environment]::GetEnvironmentVariable('ChocolateyInstall','Machine')
+    Write-Verbose "Env:ChocolateyInstall has $env:ChocolateyInstall"
+
+    #Download an execute install script
     $file = Join-Path -Path $InstallDir -ChildPath 'install.ps1'
     Get-FileDownload -url $ChocoInstallScriptUrl -file $file
     . $file
 
     #refresh after install
     Write-Verbose 'Adding Choco to path'
-    $env:Path = [Environment]::GetEnvironmentVariable('Path','Machine')   
+    $env:Path = [Environment]::GetEnvironmentVariable('Path','Machine')
     if ($env:path -notlike "*$InstallDir*") {
         $env:Path += ";$InstallDir"
     }
-    
-    Write-Verbose "Env:Path has $env:path"    
+
+    Write-Verbose "Env:Path has $env:path"
     #InstallChoco $InstallDir
     $Null = Choco
     Write-Verbose 'Finish InstallChoco'

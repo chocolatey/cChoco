@@ -1,5 +1,4 @@
 ﻿# Copyright (c) 2017 Chocolatey Software, Inc.
-# Copyright (c) 2013 - 2017 Lawrence Gripper & original authors/contributors from https://github.com/chocolatey/cChoco
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,24 +12,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-Configuration InstallChoco
-{
-    Import-DscResource -Module cChoco
-    Node "localhost"
-    {
-        cChocoInstaller InstallChoco
-        {
-            InstallDir = "c:\choco"
+
+configuration ChocoFeatures {
+
+    Import-DscResource -ModuleName cChoco
+
+    Node 'localhost' {
+
+        cChocoFeature allowGlobalConfirmation {
+
+            FeatureName = "allowGlobalConfirmation"
+            Ensure = 'Present'
+
         }
-        cChocoPackageInstaller installSkypeWithChocoParams
-        {
-            Name                 = 'skype'
-            Ensure               = 'Present'
-            DependsOn            = '[cChocoInstaller]installChoco'
+
+        cChocoFeature powershellHost {
+            
+            FeatureName = "powershellHost"
+            Ensure = 'Absent'
         }
     }
+
 }
 
-$config = InstallChoco
+
+$config = ChocoFeatures
 
 Start-DscConfiguration -Path $config.psparentpath -Wait -Verbose -Force
