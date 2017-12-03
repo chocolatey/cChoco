@@ -259,6 +259,7 @@ function InstallPackage
 
 function UninstallPackage
 {
+    [Diagnostics.CodeAnalysis.SuppressMessage('PSAvoidUsingInvokeExpression','')]
     param(
         [Parameter(Position=0,Mandatory)]
         [string]$pName,
