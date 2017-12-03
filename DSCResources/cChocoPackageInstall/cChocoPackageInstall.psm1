@@ -226,23 +226,29 @@ function InstallPackage
 
     $env:Path = [Environment]::GetEnvironmentVariable('Path','Machine')
 
-    [string]$chocoinstallparams = '-y'
+    [string]$chocoParams = '-y'
     if ($pParams) {
-        $chocoinstallparams += " --params=`"$pParams`""
+        $chocoParams += " --params=`"$pParams`""
     }
     if ($pVersion) {
-        $chocoinstallparams += " --version=`"$pVersion`""
+        $chocoParams += " --version=`"$pVersion`""
     }
     if ($pSource) {
-        $chocoinstallparams += " --source=`"$pSource`""
+        $chocoParams += " --source=`"$pSource`""
     }
     if ($cParams) {
-        $chocoinstallparams += " $cParams"
+        $chocoParams += " $cParams"
     }
-    Write-Verbose -Message "Install command: 'choco install $pName $chocoinstallparams'"
+    # Check if Chocolatey version is Greater than 0.10.4, and add --no-progress 
+    $chocoVer = [system.version](Get-ChocoInstalledPackage | Where-Object { $_.name -eq 'chocolatey' }).Version
+    if ($chocoVer -ge 0.10.4) {
+        $chocoParams += " --no-progress"
+    }
 
-    $packageInstallOuput = Invoke-Expression -Command "choco install $pName $chocoinstallparams"
-    Write-Verbose -Message "Package output $packageInstallOuput "
+    $cmd = "choco install $pName $chocoParams"
+    Write-Verbose -Message "Install command: '$cmd'"
+    $packageInstallOuput = Invoke-Expression -Command $cmd
+    Write-Verbose -Message "Package output $packageInstallOuput"
 
     # Clear Package Cache
     Get-ChocoInstalledPackage 'Purge'
@@ -262,17 +268,22 @@ function UninstallPackage
 
     $env:Path = [Environment]::GetEnvironmentVariable('Path','Machine')
 
-    #Todo: Refactor
-    if (-not ($pParams))
-    {
-        Write-Verbose -Message 'Uninstalling Package Standard'
-        $packageUninstallOuput = choco uninstall $pName -y
+    [string]$chocoParams = "-y"
+    if ($pParams) {
+        $chocoParams += " --params=`"$pParams`""
     }
-    elseif ($pParams)
-    {
-        Write-Verbose -Message "Uninstalling Package with params $pParams"
-        $packageUninstallOuput = choco uninstall $pName --params="$pParams" -y
+    if ($pVersion) {
+        $chocoParams += " --version=`"$pVersion`""
     }
+    # Check if Chocolatey version is Greater than 0.10.4, and add --no-progress 
+    $chocoVer = [system.version](Get-ChocoInstalledPackage | Where-Object { $_.name -eq 'chocolatey' }).Version
+    if ($chocoVer -ge 0.10.4) {
+        $chocoParams += " --no-progress"
+    }
+
+    $cmd = "choco uninstall $pName $chocoParams"
+    Write-Verbose -Message "Uninstalling $pName with: '$cmd'"
+    $packageUninstallOuput = Invoke-Expression -Command $cmd
 
     Write-Verbose -Message "Package uninstall output $packageUninstallOuput "
 
@@ -325,14 +336,15 @@ Function Test-LatestVersionInstalled {
     )
     Write-Verbose -Message "Testing if $pName can be upgraded"
 
-    [string]$chocoupgradeparams = '--noop'
+    [string]$chocoParams = '--noop'
     if ($pSource) {
-        $chocoupgradeparams += " --source=`"$pSource`""
+        $chocoParams += " --source=`"$pSource`""
     }
 
-    Write-Verbose -Message "Testing if $pName can be upgraded: 'choco upgrade $pName $chocoupgradeparams'"
+    $cmd = "choco upgrade $pName $chocoParams"
+    Write-Verbose -Message "Testing if $pName can be upgraded: '$cmd'"
 
-    $packageUpgradeOuput = Invoke-Expression -Command "choco upgrade $pName $chocoupgradeparams"
+    $packageUpgradeOuput = Invoke-Expression -Command $cmd
     $packageUpgradeOuput | ForEach-Object {Write-Verbose -Message $_}
 
     if ($packageUpgradeOuput -match "$pName.*is the latest version available based on your source") {
@@ -379,17 +391,23 @@ Function Upgrade-Package {
     $env:Path = [Environment]::GetEnvironmentVariable('Path','Machine')
     Write-Verbose -Message "Path variables: $env:Path"
 
-    [string]$chocoupgradeparams = '-dv -y'
+    [string]$chocoParams = '-dv -y'
     if ($pParams) {
-        $chocoupgradeparams += " --params=`"$pParams`""
+        $chocoParams += " --params=`"$pParams`""
     }
     if ($pSource) {
-        $chocoupgradeparams += " --source=`"$pSource`""
+        $chocoParams += " --source=`"$pSource`""
     }
     if ($cParams) {
-        $chocoupgradeparams += " $cParams"
+        $chocoParams += " $cParams"
     }
-    $cmd = "choco upgrade $pName $chocoupgradeparams"
+    # Check if Chocolatey version is Greater than 0.10.4, and add --no-progress 
+    $chocoVer = [system.version](Get-ChocoInstalledPackage | Where-Object { $_.name -eq 'chocolatey' }).Version
+    if ($chocoVer -ge 0.10.4) {
+        $chocoParams += " --no-progress"
+    }
+
+    $cmd = "choco upgrade $pName $chocoParams"
     Write-Verbose -Message "Upgrade command: '$cmd'"
 
     if (-not (IsPackageInstalled -pName $pName))
