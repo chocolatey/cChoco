@@ -240,8 +240,9 @@ function InstallPackage
         $chocoinstallparams += " $cParams"
     }
     Write-Verbose -Message "Install command: 'choco install $pName $chocoinstallparams'"
-
-    $packageInstallOuput = Invoke-Expression -Command "choco install $pName $chocoinstallparams"
+    $procInfo = new-object System.Diagnostics.ProcessStartInfo
+    $procInfo.filenameklkllk
+    $packageInstallOuput = Invoke-ChocoLatey "install $pName $chocoinstallparams"
     Write-Verbose -Message "Package output $packageInstallOuput "
 
     #refresh path varaible in powershell, as choco doesn"t, to pull in git
@@ -263,12 +264,12 @@ function UninstallPackage
     if (-not ($pParams))
     {
         Write-Verbose -Message 'Uninstalling Package Standard'
-        $packageUninstallOuput = choco uninstall $pName -y
+        $packageUninstallOuput = Invoke-Chocolatey "uninstall $pName -y"
     }
     elseif ($pParams)
     {
         Write-Verbose -Message "Uninstalling Package with params $pParams"
-        $packageUninstallOuput = choco uninstall $pName --params="$pParams" -y
+        $packageUninstallOuput = Invoke-Chocolatey "uninstall $pName --params=`"$pParams`" -y"
     }
 
     Write-Verbose -Message "Package uninstall output $packageUninstallOuput "
@@ -326,7 +327,7 @@ Function Test-LatestVersionInstalled {
 
     Write-Verbose -Message "Testing if $pName can be upgraded: 'choco upgrade $pName $chocoupgradeparams'"
 
-    $packageUpgradeOuput = Invoke-Expression -Command "choco upgrade $pName $chocoupgradeparams"
+    $packageUpgradeOuput = Invoke-Chocolatey "upgrade $pName $chocoupgradeparams"
     $packageUpgradeOuput | ForEach-Object {Write-Verbose -Message $_}
 
     if ($packageUpgradeOuput -match "$pName.*is the latest version available based on your source") {
@@ -383,7 +384,7 @@ Function Upgrade-Package {
     if ($cParams) {
         $chocoupgradeparams += " $cParams"
     }
-    $cmd = "choco upgrade $pName $chocoupgradeparams"
+    $cmd = "upgrade $pName $chocoupgradeparams"
     Write-Verbose -Message "Upgrade command: '$cmd'"
 
     if (-not (IsPackageInstalled -pName $pName))
@@ -391,12 +392,62 @@ Function Upgrade-Package {
         throw "$pName is not installed, you cannot upgrade"
     }
 
-    $packageUpgradeOuput = Invoke-Expression -Command $cmd
+    $packageUpgradeOuput = Invoke-Chocolatey $cmd
     $packageUpgradeOuput | ForEach-Object { Write-Verbose -Message $_ }
 }
 
 function Get-ChocoInstalledPackage {
     Return (choco list -lo -r | ConvertFrom-Csv -Header 'Name', 'Version' -Delimiter "|")
+}
+
+
+<#
+.Synopsis
+    Invoke the chocolatey executable on the sytem. Throws choco error
+.DESCRIPTION
+    Invoke the chocolatey executable on the sytem. Throws choco error, also when used in DSC configurations.
+.EXAMPLE
+    Invoke-Chocolatey "list"
+.EXAMPLE
+    Invoke-Chocolatey "list -lo"
+.EXAMPLE
+    IChoco "list -lo"
+#>
+function Invoke-Chocolatey
+{
+    [CmdletBinding()]
+    [Alias("IChoco")]
+    [OutputType([int])]
+    Param
+    (
+        # Param1 help description
+        [Parameter(Position=0)]
+        $pParams
+    )
+    Process
+    {
+        Write-Verbose -Message "command: 'choco $pParams'"
+        $pinfo = New-Object System.Diagnostics.ProcessStartInfo
+        $pinfo.FileName = "choco"
+        $pinfo.RedirectStandardError = $true
+        $pinfo.RedirectStandardOutput = $true
+        $pinfo.UseShellExecute = $false
+        $pinfo.Arguments = $pParams
+        $p = New-Object System.Diagnostics.Process
+        $p.StartInfo = $pinfo
+        $p.Start() | Out-Null
+        $output = $p.StandardOutput.ReadToEnd()
+        $p.WaitForExit()
+
+        if($p.ExitCode -eq 0)
+        {
+            $output
+        }
+        else
+        {
+            throw $output
+        }
+    }
 }
 
 Export-ModuleMember -Function *-TargetResource
