@@ -1,4 +1,4 @@
-# Copyright (c) 2017 Chocolatey Software, Inc.
+﻿# Copyright (c) 2017 Chocolatey Software, Inc.
 # Copyright (c) 2013 - 2017 Lawrence Gripper & original authors/contributors from https://github.com/chocolatey/cChoco
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -240,13 +240,8 @@ function InstallPackage
         $chocoinstallparams += " $cParams"
     }
     Write-Verbose -Message "Install command: 'choco install $pName $chocoinstallparams'"
-    $procInfo = new-object System.Diagnostics.ProcessStartInfo
-    $procInfo.filenameklkllk
     $packageInstallOuput = Invoke-ChocoLatey "install $pName $chocoinstallparams"
     Write-Verbose -Message "Package output $packageInstallOuput "
-
-    # Clear Package Cache
-    Get-ChocoInstalledPackage 'Purge'
 
     #refresh path varaible in powershell, as choco doesn"t, to pull in git
     $env:Path = [Environment]::GetEnvironmentVariable('Path','Machine')
@@ -276,9 +271,6 @@ function UninstallPackage
     }
 
     Write-Verbose -Message "Package uninstall output $packageUninstallOuput "
-
-    # Clear Package Cache
-    Get-ChocoInstalledPackage 'Purge'
 
     #refresh path varaible in powershell, as choco doesn"t, to pull in git
     $env:Path = [Environment]::GetEnvironmentVariable('Path','Machine')
@@ -400,31 +392,10 @@ Function Upgrade-Package {
 
     $packageUpgradeOuput = Invoke-Chocolatey $cmd
     $packageUpgradeOuput | ForEach-Object { Write-Verbose -Message $_ }
-
-    # Clear Package Cache
-    Get-ChocoInstalledPackage 'Purge'
 }
 
-function Get-ChocoInstalledPackage ($action) {
-    $ChocoInstallLP = Join-Path -Path $env:ChocolateyInstall -ChildPath 'cache'
-    if ( -not (Test-Path $ChocoInstallLP)){
-        New-Item -Name 'cache' -Path $env:ChocolateyInstall -ItemType Directory | Out-Null
-    }
-    $ChocoInstallList = Join-Path -Path $ChocoInstallLP -ChildPath 'ChocoInstalled.xml'
-
-    if ($action -eq 'Purge') {
-        Remove-Item $ChocoInstallList -Force
-        $res = $true
-    } else {
-        $PackageCacheSec = (Get-Date).AddSeconds('-60')
-        if ( $PackageCacheSec -lt (Get-Item $ChocoInstallList -ErrorAction SilentlyContinue).LastWriteTime ) {
-                $res = Import-Clixml $ChocoInstallList
-        } else {
-            choco list -lo -r | ConvertFrom-Csv -Header 'Name', 'Version' -Delimiter "|" -OutVariable res | Export-Clixml -Path $ChocoInstallList
-        }
-    }
-
-    Return $res
+function Get-ChocoInstalledPackage {
+    Return (choco list -lo -r | ConvertFrom-Csv -Header 'Name', 'Version' -Delimiter "|")
 }
 
 
