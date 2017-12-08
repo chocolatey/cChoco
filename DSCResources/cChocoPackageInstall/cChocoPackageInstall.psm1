@@ -241,7 +241,7 @@ function InstallPackage
     }
     # Check if Chocolatey version is Greater than 0.10.4, and add --no-progress 
     $chocoVer = [system.version](Get-ChocoInstalledPackage | Where-Object { $_.name -eq 'chocolatey' }).Version
-    if ($chocoVer -ge 0.10.4) {
+    if ($chocoVer -ge '0.10.4') {
         $chocoParams += " --no-progress"
     }
 
@@ -278,7 +278,7 @@ function UninstallPackage
     }
     # Check if Chocolatey version is Greater than 0.10.4, and add --no-progress 
     $chocoVer = [system.version](Get-ChocoInstalledPackage | Where-Object { $_.name -eq 'chocolatey' }).Version
-    if ($chocoVer -ge 0.10.4) {
+    if ($chocoVer -ge '0.10.4') {
         $chocoParams += " --no-progress"
     }
 
@@ -404,7 +404,7 @@ Function Upgrade-Package {
     }
     # Check if Chocolatey version is Greater than 0.10.4, and add --no-progress 
     $chocoVer = [system.version](Get-ChocoInstalledPackage | Where-Object { $_.name -eq 'chocolatey' }).Version
-    if ($chocoVer -ge 0.10.4) {
+    if ($chocoVer -ge '0.10.4') {
         $chocoParams += " --no-progress"
     }
 
