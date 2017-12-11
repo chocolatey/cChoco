@@ -240,8 +240,7 @@ function InstallPackage
         $chocoParams += " $cParams"
     }
     # Check if Chocolatey version is Greater than 0.10.4, and add --no-progress 
-    $chocoVer = [system.version](Get-ChocoInstalledPackage | Where-Object { $_.name -eq 'chocolatey' }).Version
-    if ($chocoVer -ge '0.10.4') {
+    if ((Get-ChocoVersion) -ge [version]('0.10.4')){
         $chocoParams += " --no-progress"
     }
 
@@ -277,8 +276,7 @@ function UninstallPackage
         $chocoParams += " --version=`"$pVersion`""
     }
     # Check if Chocolatey version is Greater than 0.10.4, and add --no-progress 
-    $chocoVer = [system.version](Get-ChocoInstalledPackage | Where-Object { $_.name -eq 'chocolatey' }).Version
-    if ($chocoVer -ge '0.10.4') {
+    if ((Get-ChocoVersion) -ge [version]('0.10.4')){
         $chocoParams += " --no-progress"
     }
 
@@ -403,8 +401,7 @@ Function Upgrade-Package {
         $chocoParams += " $cParams"
     }
     # Check if Chocolatey version is Greater than 0.10.4, and add --no-progress 
-    $chocoVer = [system.version](Get-ChocoInstalledPackage | Where-Object { $_.name -eq 'chocolatey' }).Version
-    if ($chocoVer -ge '0.10.4') {
+    if ((Get-ChocoVersion) -ge [version]('0.10.4')){
         $chocoParams += " --no-progress"
     }
 
@@ -439,6 +436,28 @@ function Get-ChocoInstalledPackage ($action) {
                 $res = Import-Clixml $ChocoInstallList
         } else {
             choco list -lo -r | ConvertFrom-Csv -Header 'Name', 'Version' -Delimiter "|" -OutVariable res | Export-Clixml -Path $ChocoInstallList
+        }
+    }
+
+    Return $res
+}
+
+function Get-ChocoVersion ($action) {
+    $chocoInstallCache = Join-Path -Path $env:ChocolateyInstall -ChildPath 'cache'
+    if ( -not (Test-Path $chocoInstallCache)){
+        New-Item -Name 'cache' -Path $env:ChocolateyInstall -ItemType Directory | Out-Null
+    }
+    $chocoVersion = Join-Path -Path $chocoInstallCache -ChildPath 'ChocoVersion.xml'
+
+    if ($action -eq 'Purge') {
+        Remove-Item $chocoVersion -Force
+        $res = $true
+    } else {
+        $cacheSec = (Get-Date).AddSeconds('-60')
+        if ( $cacheSec -lt (Get-Item $chocoVersion -ErrorAction SilentlyContinue).LastWriteTime ) {
+                $res = Import-Clixml $chocoVersion
+        } else {
+            $res = [version](choco -v) | Export-Clixml -Path $chocoVersion
         }
     }
 
