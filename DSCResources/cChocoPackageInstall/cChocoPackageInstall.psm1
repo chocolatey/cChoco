@@ -455,9 +455,11 @@ function Get-ChocoVersion ($action) {
     } else {
         $cacheSec = (Get-Date).AddSeconds('-60')
         if ( $cacheSec -lt (Get-Item $chocoVersion -ErrorAction SilentlyContinue).LastWriteTime ) {
-                $res = Import-Clixml $chocoVersion
+            $res = Import-Clixml $chocoVersion
         } else {
-            $res = [version](choco -v) | Export-Clixml -Path $chocoVersion
+            $cmd = choco -v
+            $res = [version]($cmd.Split('-')[0])
+            $res | Export-Clixml -Path $chocoVersion
         }
     }
 
