@@ -240,7 +240,7 @@ function InstallPackage
         $chocoParams += " $cParams"
     }
     # Check if Chocolatey version is Greater than 0.10.4, and add --no-progress 
-    if ((Get-ChocoVersion) -ge [version]('0.10.4')){
+    if ((Get-ChocoVersion) -ge [System.Version]('0.10.4')){
         $chocoParams += " --no-progress"
     }
 
@@ -276,7 +276,7 @@ function UninstallPackage
         $chocoParams += " --version=`"$pVersion`""
     }
     # Check if Chocolatey version is Greater than 0.10.4, and add --no-progress 
-    if ((Get-ChocoVersion) -ge [version]('0.10.4')){
+    if ((Get-ChocoVersion) -ge [System.Version]('0.10.4')){
         $chocoParams += " --no-progress"
     }
 
@@ -401,7 +401,7 @@ Function Upgrade-Package {
         $chocoParams += " $cParams"
     }
     # Check if Chocolatey version is Greater than 0.10.4, and add --no-progress 
-    if ((Get-ChocoVersion) -ge [version]('0.10.4')){
+    if ((Get-ChocoVersion) -ge [System.Version]('0.10.4')){
         $chocoParams += " --no-progress"
     }
 
@@ -458,7 +458,7 @@ function Get-ChocoVersion ($action) {
             $res = Import-Clixml $chocoVersion
         } else {
             $cmd = choco -v
-            $res = [version]($cmd.Split('-')[0])
+            $res = [System.Version]($cmd.Split('-')[0])
             $res | Export-Clixml -Path $chocoVersion
         }
     }
