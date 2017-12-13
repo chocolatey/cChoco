@@ -91,26 +91,26 @@ function Set-TargetResource
             $whatIfShouldProcess = $pscmdlet.ShouldProcess("$Name", 'Remove Chocolatey package')
             if ($whatIfShouldProcess) {
                 Write-Verbose -Message "Removing $Name as ensure is set to absent"
-                UninstallPackage -pName $Name -pParams $Params
+                UninstallPackage -pName $Name -arguments $Params
             }
         } else {
             $whatIfShouldProcess = $pscmdlet.ShouldProcess("$Name", 'Installing / upgrading package from Chocolatey')
             if ($whatIfShouldProcess) {
                 if ($Version) {
                     Write-Verbose -Message "Uninstalling $Name due to version mis-match"
-                    UninstallPackage -pName $Name -pParams $Params
+                    UninstallPackage -pName $Name -arguments $Params
                     Write-Verbose -Message "Re-Installing $Name with correct version $version"
-                    InstallPackage -pName $Name -pParams $Params -pVersion $Version -pSource $Source -cParams $chocoParams
+                    InstallPackage -pName $Name -arguments $Params -pVersion $Version -pSource $Source -cParams $chocoParams
                 } elseif ($AutoUpgrade) {
                     Write-Verbose -Message "Upgrading $Name due to version mis-match"
-                    Upgrade-Package -pName $Name -pParams $Params -pSource $Source
+                    Upgrade-Package -pName $Name -arguments $Params -pSource $Source
                 }
             }
         }
     } else {
         $whatIfShouldProcess = $pscmdlet.ShouldProcess("$Name", 'Install package from Chocolatey')
         if ($whatIfShouldProcess) {
-            InstallPackage -pName $Name -pParams $Params -pVersion $Version -pSource $Source -cParams $chocoParams
+            InstallPackage -pName $Name -arguments $Params -pVersion $Version -pSource $Source -cParams $chocoParams
         }
     }
 }
@@ -215,7 +215,7 @@ function InstallPackage
         [Parameter(Position=0,Mandatory)]
         [string]$pName,
         [Parameter(Position=1)]
-        [string]$pParams,
+        [string]$arguments,
         [Parameter(Position=2)]
         [string]$pVersion,
         [Parameter(Position=3)]
@@ -227,8 +227,8 @@ function InstallPackage
     $env:Path = [Environment]::GetEnvironmentVariable('Path','Machine')
 
     [string]$chocoinstallparams = '-y'
-    if ($pParams) {
-        $chocoinstallparams += " --params=`"$pParams`""
+    if ($arguments) {
+        $chocoinstallparams += " --params=`"$arguments`""
     }
     if ($pVersion) {
         $chocoinstallparams += " --version=`"$pVersion`""
@@ -253,21 +253,21 @@ function UninstallPackage
         [Parameter(Position=0,Mandatory)]
         [string]$pName,
         [Parameter(Position=1)]
-        [string]$pParams
+        [string]$arguments
     )
 
     $env:Path = [Environment]::GetEnvironmentVariable('Path','Machine')
 
     #Todo: Refactor
-    if (-not ($pParams))
+    if (-not ($arguments))
     {
         Write-Verbose -Message 'Uninstalling Package Standard'
         $packageUninstallOuput = Invoke-Chocolatey "uninstall $pName -y"
     }
-    elseif ($pParams)
+    elseif ($arguments)
     {
-        Write-Verbose -Message "Uninstalling Package with params $pParams"
-        $packageUninstallOuput = Invoke-Chocolatey "uninstall $pName --params=`"$pParams`" -y"
+        Write-Verbose -Message "Uninstalling Package with params $arguments"
+        $packageUninstallOuput = Invoke-Chocolatey "uninstall $pName --params=`"$arguments`" -y"
     }
 
     Write-Verbose -Message "Package uninstall output $packageUninstallOuput "
@@ -362,7 +362,7 @@ Function Upgrade-Package {
         [Parameter(Position=0,Mandatory)]
         [string]$pName,
         [Parameter(Position=1)]
-        [string]$pParams,
+        [string]$arguments,
         [Parameter(Position=2)]
         [string]$pSource,
         [Parameter(Position=3)]
@@ -373,8 +373,8 @@ Function Upgrade-Package {
     Write-Verbose -Message "Path variables: $env:Path"
 
     [string]$chocoupgradeparams = '-dv -y'
-    if ($pParams) {
-        $chocoupgradeparams += " --params=`"$pParams`""
+    if ($arguments) {
+        $chocoupgradeparams += " --params=`"$arguments`""
     }
     if ($pSource) {
         $chocoupgradeparams += " --source=`"$pSource`""
@@ -414,36 +414,38 @@ function Get-ChocoInstalledPackage {
 function Invoke-Chocolatey
 {
     [CmdletBinding()]
-    [Alias("IChoco")]
-    [OutputType([int])]
+
     Param
     (
         # Param1 help description
         [Parameter(Position=0)]
-        $pParams
+        $arguments
     )
     Process
     {
-        Write-Verbose -Message "command: 'choco $pParams'"
+        Write-Verbose -Message "command: 'choco $arguments'"
         $pinfo = New-Object System.Diagnostics.ProcessStartInfo
         $pinfo.FileName = "choco"
         $pinfo.RedirectStandardError = $true
         $pinfo.RedirectStandardOutput = $true
         $pinfo.UseShellExecute = $false
-        $pinfo.Arguments = $pParams
+        $pinfo.Arguments = $arguments
         $p = New-Object System.Diagnostics.Process
         $p.StartInfo = $pinfo
         $p.Start() | Out-Null
         $output = $p.StandardOutput.ReadToEnd()
         $p.WaitForExit()
-
+        #cast output to object array
+        [object[]]$result = $output.Split("`n")
         if($p.ExitCode -eq 0)
         {
-            $output
+            $result
         }
         else
         {
-            throw $output
+           #ensure $LASTEXITCODE equals exit code choco. 
+           powershell "exit $($p.ExitCode)"
+           Write-Error $output -ErrorAction Stop  
         }
     }
 }
