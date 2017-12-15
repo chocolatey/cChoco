@@ -450,7 +450,7 @@ function Invoke-Chocolatey
 
     if($exitcode -in $validExitCodes )
     {
-        [object[]]$outputdata = ($output.Split("`n") | ForEach-Object { ConvertFrom-String -InputObject $_ }) 
+        $output.Split("`n")
         $outputdata
     }
     else
