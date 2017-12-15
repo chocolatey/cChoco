@@ -440,7 +440,6 @@ function Invoke-Chocolatey
     $p.Start() | Out-Null
 
     $output = $p.StandardOutput.ReadToEnd()
-    $errorMsg = $p.StandardError.ReadToEnd()
     $p.WaitForExit()
     $exitcode = $p.ExitCode
     $p.Dispose()
