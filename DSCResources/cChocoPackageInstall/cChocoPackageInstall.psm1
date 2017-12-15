@@ -338,6 +338,7 @@ Function Test-LatestVersionInstalled {
 ##attempting to work around the issues with Chocolatey calling Write-host in its scripts.
 function global:Write-Host
 {
+    [Diagnostics.CodeAnalysis.SuppressMessage('PSAvoidGlobalFunctions','')]
     Param(
         [Parameter(Mandatory, Position = 0)]
         [Object]
@@ -419,7 +420,7 @@ function Invoke-Chocolatey
         [string]$arguments
     )
 
-    $validExitCodes =  $(
+    [int[]]$validExitCodes =  $(
                 0,    #most widely used success exit code
                 1605, #(MSI uninstall) - the product is not found, could have already been uninstalled
                 1614, #(MSI uninstall) - the product is uninstalled
@@ -449,7 +450,7 @@ function Invoke-Chocolatey
 
     if($exitcode -in $validExitCodes )
     {
-        $output.Split("`n")
+        [object[]]$outputdata = ($output.Split("`n") | ForEach-Object { ConvertFrom-String -InputObject $_ }) 
     }
     else
     { 
