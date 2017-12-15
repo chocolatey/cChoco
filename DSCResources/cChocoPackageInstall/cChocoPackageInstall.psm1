@@ -419,7 +419,7 @@ function Invoke-Chocolatey
         [string]$arguments
     )
 
-    [int[]]$validExitCodes =  $(
+    $validExitCodes =  $(
                 0,    #most widely used success exit code
                 1605, #(MSI uninstall) - the product is not found, could have already been uninstalled
                 1614, #(MSI uninstall) - the product is uninstalled
@@ -450,7 +450,7 @@ function Invoke-Chocolatey
 
     if($exitcode -in $validExitCodes )
     {
-        [object[]]$output.Split("`n")
+        $output.Split("`n")
     }
     else
     { 
