@@ -215,7 +215,7 @@ function InstallPackage
         [Parameter(Position=0,Mandatory)]
         [string]$pName,
         [Parameter(Position=1)]
-        [string]$arguments,
+        [string]$pParams,
         [Parameter(Position=2)]
         [string]$pVersion,
         [Parameter(Position=3)]
@@ -227,8 +227,8 @@ function InstallPackage
     $env:Path = [Environment]::GetEnvironmentVariable('Path','Machine')
 
     [string]$chocoinstallparams = '-y'
-    if ($arguments) {
-        $chocoinstallparams += " --params=`"$arguments`""
+    if ($pParams) {
+        $chocoinstallparams += " --params=`"$pParams`""
     }
     if ($pVersion) {
         $chocoinstallparams += " --version=`"$pVersion`""
@@ -253,21 +253,21 @@ function UninstallPackage
         [Parameter(Position=0,Mandatory)]
         [string]$pName,
         [Parameter(Position=1)]
-        [string]$arguments
+        [string]$pParams
     )
 
     $env:Path = [Environment]::GetEnvironmentVariable('Path','Machine')
 
     #Todo: Refactor
-    if (-not ($arguments))
+    if (-not ($pParams))
     {
         Write-Verbose -Message 'Uninstalling Package Standard'
         $packageUninstallOuput = Invoke-Chocolatey "uninstall $pName -y"
     }
-    elseif ($arguments)
+    elseif ($pParams)
     {
-        Write-Verbose -Message "Uninstalling Package with params $arguments"
-        $packageUninstallOuput = Invoke-Chocolatey "uninstall $pName --params=`"$arguments`" -y"
+        Write-Verbose -Message "Uninstalling Package with params $pParams"
+        $packageUninstallOuput = Invoke-Chocolatey "uninstall $pName --params=`"$pParams`" -y"
     }
 
     Write-Verbose -Message "Package uninstall output $packageUninstallOuput "
@@ -362,7 +362,7 @@ Function Upgrade-Package {
         [Parameter(Position=0,Mandatory)]
         [string]$pName,
         [Parameter(Position=1)]
-        [string]$arguments,
+        [string]$pParams,
         [Parameter(Position=2)]
         [string]$pSource,
         [Parameter(Position=3)]
@@ -373,8 +373,8 @@ Function Upgrade-Package {
     Write-Verbose -Message "Path variables: $env:Path"
 
     [string]$chocoupgradeparams = '-dv -y'
-    if ($arguments) {
-        $chocoupgradeparams += " --params=`"$arguments`""
+    if ($pParams) {
+        $chocoupgradeparams += " --params=`"$pParams`""
     }
     if ($pSource) {
         $chocoupgradeparams += " --source=`"$pSource`""
@@ -401,53 +401,62 @@ function Get-ChocoInstalledPackage {
 
 <#
 .Synopsis
-    Invoke the chocolatey executable on the sytem. Throws choco error
+   Run chocolatey executable and throws error on failure
 .DESCRIPTION
-    Invoke the chocolatey executable on the sytem. Throws choco error, also when used in DSC configurations.
+   Run chocolatey executable and throws error on failure
 .EXAMPLE
-    Invoke-Chocolatey "list"
+   Invoke-Chocolatey "list -lo"
 .EXAMPLE
-    Invoke-Chocolatey "list -lo"
-.EXAMPLE
-    IChoco "list -lo"
+   Invoke-Chocolatey -arguments "list -lo"
 #>
 function Invoke-Chocolatey
 {
     [CmdletBinding()]
-
     Param
     (
-        # Param1 help description
+        # chocolatey arguments."
         [Parameter(Position=0)]
-        $arguments
+        [string]$arguments
     )
-    Process
+
+    [int[]]$validExitCodes =  $(
+                0,    #most widely used success exit code
+                1605, #(MSI uninstall) - the product is not found, could have already been uninstalled
+                1614, #(MSI uninstall) - the product is uninstalled
+                1641, #(MSI) - restart initiated
+                3010  #(MSI, InnoSetup can be passed to provide this) - restart required
+            )
+    Write-Verbose -Message "command: 'choco $arguments'" 
+    
+    $pinfo = New-Object System.Diagnostics.ProcessStartInfo
+    $pinfo.FileName = "choco"
+    $pinfo.RedirectStandardError = $true
+    $pinfo.RedirectStandardOutput = $true
+    $pinfo.UseShellExecute = $false
+    $pinfo.Arguments = "$arguments"
+
+    $p = New-Object System.Diagnostics.Process
+    $p.StartInfo = $pinfo
+    $p.Start() | Out-Null
+
+    $output = $p.StandardOutput.ReadToEnd()
+    $errorMsg = $p.StandardError.ReadToEnd()
+    $p.WaitForExit()
+    $exitcode = $p.ExitCode
+    $p.Dispose()
+
+    #Set $LASTEXITCODE variable.
+    powershell.exe   -NoLogo -NoProfile -Noninteractive "exit $exitcode"
+
+    if($exitcode -in $validExitCodes )
     {
-        Write-Verbose -Message "command: 'choco $arguments'"
-        $pinfo = New-Object System.Diagnostics.ProcessStartInfo
-        $pinfo.FileName = "choco"
-        $pinfo.RedirectStandardError = $true
-        $pinfo.RedirectStandardOutput = $true
-        $pinfo.UseShellExecute = $false
-        $pinfo.Arguments = $arguments
-        $p = New-Object System.Diagnostics.Process
-        $p.StartInfo = $pinfo
-        $p.Start() | Out-Null
-        $output = $p.StandardOutput.ReadToEnd()
-        $p.WaitForExit()
-        #cast output to object array
-        [object[]]$result = $output.Split("`n")
-        if($p.ExitCode -eq 0)
-        {
-            $result
-        }
-        else
-        {
-           #ensure $LASTEXITCODE equals exit code choco. 
-           powershell "exit $($p.ExitCode)"
-           Write-Error $output -ErrorAction Stop  
-        }
+        [object[]]$output.Split("`n")
     }
+    else
+    { 
+        #when error, throw output as error, contains errormessage
+        throw "Error: chocolatey command failed with exit code $exitcode.`n$output" 
+    }       
 }
 
 Export-ModuleMember -Function *-TargetResource
