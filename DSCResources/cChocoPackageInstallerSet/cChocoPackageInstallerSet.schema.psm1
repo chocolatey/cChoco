@@ -33,6 +33,10 @@ Composite DSC Resource allowing you to specify multiple choco packages in a sing
         [ValidateNotNullOrEmpty()]
         [System.String]
         $Source
+        [parameter(Mandatory = $false)]
+        [ValidateNotNullOrEmpty()]
+        [bool]
+        $AutoUpgrade = $false
     )
 
     foreach ($pName in $Name) {
@@ -40,6 +44,7 @@ Composite DSC Resource allowing you to specify multiple choco packages in a sing
             Ensure = $Ensure
             Name = $pName
             Source = $Source
+            AutoUpgrade = $AutoUpgrade
         }
     }
 }
