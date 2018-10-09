@@ -69,7 +69,6 @@ function Set-TargetResource
         [ValidateNotNullOrEmpty()]
         [string]
         $Version,
-        [ValidateNotNullOrEmpty()]
         [string]
         $Source,
         [String]
@@ -134,7 +133,6 @@ function Test-TargetResource
         [ValidateNotNullOrEmpty()]
         [string]
         $Version,
-        [ValidateNotNullOrEmpty()]
         [string]
         $Source,
         [ValidateNotNullOrEmpty()]
@@ -167,7 +165,10 @@ function Test-TargetResource
         Write-Verbose -Message "Checking if $Name is installed"
 
         if ($AutoUpgrade -and $isInstalled) {
-            $result = Test-LatestVersionInstalled -pName $Name -pSource $Source
+            if ($Source){
+                [string]$pSource = "-pSource `"$Source`""
+            }
+            $result = Test-LatestVersionInstalled -pName $Name $pSource
         } else {
             $result = $isInstalled
         }
@@ -320,7 +321,6 @@ Function Test-LatestVersionInstalled {
     param(
         [Parameter(Mandatory)]
         [string]$pName,
-        [Parameter(Mandatory)]
         [string]$pSource
     )
     Write-Verbose -Message "Testing if $pName can be upgraded"
