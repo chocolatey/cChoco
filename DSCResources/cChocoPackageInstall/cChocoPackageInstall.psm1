@@ -102,7 +102,7 @@ function Set-TargetResource
                     InstallPackage -pName $Name -pParams $Params -pVersion $Version -pSource $Source -cParams $chocoParams
                 } elseif ($AutoUpgrade) {
                     Write-Verbose -Message "Upgrading $Name due to version mis-match"
-                    Upgrade-Package -pName $Name -pParams $Params -pSource $Source
+                    Upgrade-Package -pName $Name -pParams $Params -pSource $Source -cParams $chocoParams
                 }
             }
         }
