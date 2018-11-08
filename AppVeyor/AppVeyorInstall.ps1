@@ -30,7 +30,8 @@ Write-Host "Installed NuGet version '$($pkg.version)'"
 #---------------------------------#
 [version]$ScriptAnalyzerVersion = '1.8.1'
 Install-Module -Name 'PSScriptAnalyzer' -Repository PSGallery -Force -ErrorAction Stop -MaximumVersion $ScriptAnalyzerVersion
-Install-Module -Name 'Pester','xDSCResourceDesigner' -Repository PSGallery -Force -ErrorAction Stop
+Install-Module -Name 'Pester' -SkipPublisherCheck -Repository PSGallery -Force -ErrorAction Stop
+Install-Module -Name 'xDSCResourceDesigner' -Repository PSGallery -Force -ErrorAction Stop
 
 #---------------------------------#
 # Update PSModulePath             #
