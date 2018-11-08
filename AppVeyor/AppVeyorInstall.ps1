@@ -21,7 +21,7 @@ Write-Host 'Running AppVeyor install script' -ForegroundColor Yellow
 #---------------------------------#
 # Install NuGet                   #
 #---------------------------------#
-Write-Host 'Installing NuGet PackageProvide'
+Write-Host 'Installing NuGet PackageProvider'
 $pkg = Install-PackageProvider -Name NuGet -Force -ErrorAction Stop
 Write-Host "Installed NuGet version '$($pkg.version)'"
 
