@@ -38,11 +38,11 @@ Here's the general process of fixing an issue in the DSC Resource Kit:
 Build and Publishing
 ============================
 
-AppVeyor is used to package up the resource and publish to the Powershell Gallery (on successful build from a newly pushed tag only).
+AppVeyor is used to package up the resource and publish to the PowerShell Gallery (on successful build from a newly pushed tag only).
 
 The AppVeyor scripts do the following:
 - Test the resources using 'xDSCResourceDesigner'
 - Verify best practises using 'PSScriptAnalyzer'
 - Update the version in the manifest file
-- Publish the module to the powershell gallery
-- Checkin updated manifest file to github
+- Publish the module to the PowerShell gallery
+- Check in updated manifest file to GitHub
