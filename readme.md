@@ -46,3 +46,11 @@ The AppVeyor scripts do the following:
 - Update the version in the manifest file
 - Publish the module to the PowerShell gallery
 - Check in updated manifest file to GitHub
+
+To build:
+
+1. Update `ModuleVersion` in `cChoco.psd1` - use `major.minor.patch.0`;
+2. Update `version` in `appveyor.yml` - use `major.minor.patch.{build}`;
+3. Merge development branch to master - `git checkout master`, `git merge development`;
+4. Tag master with new version - `git tag v<major.minor.patch>`;
+5. Push changes with tag `git push v<major.minor.patch>`
