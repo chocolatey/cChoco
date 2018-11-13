@@ -1,4 +1,4 @@
-﻿# Copyright (c) 2017 Chocolatey Software, Inc.
+# Copyright (c) 2017 Chocolatey Software, Inc.
 # Copyright (c) 2013 - 2017 Lawrence Gripper & original authors/contributors from https://github.com/chocolatey/cChoco
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -69,7 +69,6 @@ function Set-TargetResource
         [ValidateNotNullOrEmpty()]
         [string]
         $Version,
-        [ValidateNotNullOrEmpty()]
         [string]
         $Source,
         [String]
@@ -103,7 +102,7 @@ function Set-TargetResource
                     InstallPackage -pName $Name -pParams $Params -pVersion $Version -pSource $Source -cParams $chocoParams
                 } elseif ($AutoUpgrade) {
                     Write-Verbose -Message "Upgrading $Name due to version mis-match"
-                    Upgrade-Package -pName $Name -pParams $Params -pSource $Source
+                    Upgrade-Package -pName $Name -pParams $Params -pSource $Source -cParams $chocoParams
                 }
             }
         }
@@ -134,7 +133,6 @@ function Test-TargetResource
         [ValidateNotNullOrEmpty()]
         [string]
         $Version,
-        [ValidateNotNullOrEmpty()]
         [string]
         $Source,
         [ValidateNotNullOrEmpty()]
@@ -167,7 +165,10 @@ function Test-TargetResource
         Write-Verbose -Message "Checking if $Name is installed"
 
         if ($AutoUpgrade -and $isInstalled) {
-            $result = Test-LatestVersionInstalled -pName $Name -pSource $Source
+            if ($Source){
+                [string]$pSource = "-pSource `"$Source`""
+            }
+            $result = Test-LatestVersionInstalled -pName $Name $pSource
         } else {
             $result = $isInstalled
         }
@@ -244,6 +245,9 @@ function InstallPackage
     $packageInstallOuput = Invoke-Expression -Command "choco install $pName $chocoinstallparams"
     Write-Verbose -Message "Package output $packageInstallOuput "
 
+    # Clear Package Cache
+    Get-ChocoInstalledPackage 'Purge'
+
     #refresh path varaible in powershell, as choco doesn"t, to pull in git
     $env:Path = [Environment]::GetEnvironmentVariable('Path','Machine')
 }
@@ -272,6 +276,9 @@ function UninstallPackage
     }
 
     Write-Verbose -Message "Package uninstall output $packageUninstallOuput "
+
+    # Clear Package Cache
+    Get-ChocoInstalledPackage 'Purge'
 
     #refresh path varaible in powershell, as choco doesn"t, to pull in git
     $env:Path = [Environment]::GetEnvironmentVariable('Path','Machine')
@@ -314,7 +321,6 @@ Function Test-LatestVersionInstalled {
     param(
         [Parameter(Mandatory)]
         [string]$pName,
-        [Parameter(Mandatory)]
         [string]$pSource
     )
     Write-Verbose -Message "Testing if $pName can be upgraded"
@@ -393,10 +399,31 @@ Function Upgrade-Package {
 
     $packageUpgradeOuput = Invoke-Expression -Command $cmd
     $packageUpgradeOuput | ForEach-Object { Write-Verbose -Message $_ }
+
+    # Clear Package Cache
+    Get-ChocoInstalledPackage 'Purge'
 }
 
-function Get-ChocoInstalledPackage {
-    Return (choco list -lo -r | ConvertFrom-Csv -Header 'Name', 'Version' -Delimiter "|")
+function Get-ChocoInstalledPackage ($action) {
+    $ChocoInstallLP = Join-Path -Path $env:ChocolateyInstall -ChildPath 'cache'
+    if ( -not (Test-Path $ChocoInstallLP)){
+        New-Item -Name 'cache' -Path $env:ChocolateyInstall -ItemType Directory | Out-Null
+    }
+    $ChocoInstallList = Join-Path -Path $ChocoInstallLP -ChildPath 'ChocoInstalled.xml'
+
+    if ($action -eq 'Purge') {
+        Remove-Item $ChocoInstallList -Force
+        $res = $true
+    } else {
+        $PackageCacheSec = (Get-Date).AddSeconds('-60')
+        if ( $PackageCacheSec -lt (Get-Item $ChocoInstallList -ErrorAction SilentlyContinue).LastWriteTime ) {
+                $res = Import-Clixml $ChocoInstallList
+        } else {
+            choco list -lo -r | ConvertFrom-Csv -Header 'Name', 'Version' -Delimiter "|" -OutVariable res | Export-Clixml -Path $ChocoInstallList
+        }
+    }
+
+    Return $res
 }
 
 Export-ModuleMember -Function *-TargetResource

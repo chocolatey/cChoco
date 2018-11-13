@@ -21,7 +21,7 @@ Write-Host 'Running AppVeyor install script' -ForegroundColor Yellow
 #---------------------------------#
 # Install NuGet                   #
 #---------------------------------#
-Write-Host 'Installing NuGet PackageProvide'
+Write-Host 'Installing NuGet PackageProvider'
 $pkg = Install-PackageProvider -Name NuGet -Force -ErrorAction Stop
 Write-Host "Installed NuGet version '$($pkg.version)'"
 
@@ -30,7 +30,8 @@ Write-Host "Installed NuGet version '$($pkg.version)'"
 #---------------------------------#
 [version]$ScriptAnalyzerVersion = '1.8.1'
 Install-Module -Name 'PSScriptAnalyzer' -Repository PSGallery -Force -ErrorAction Stop -MaximumVersion $ScriptAnalyzerVersion
-Install-Module -Name 'Pester','xDSCResourceDesigner' -Repository PSGallery -Force -ErrorAction Stop
+Install-Module -Name 'Pester' -SkipPublisherCheck -Repository PSGallery -Force -ErrorAction Stop
+Install-Module -Name 'xDSCResourceDesigner' -Repository PSGallery -Force -ErrorAction Stop
 
 #---------------------------------#
 # Update PSModulePath             #
