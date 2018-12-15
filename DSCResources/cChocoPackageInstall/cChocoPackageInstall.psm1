@@ -250,7 +250,7 @@ function InstallPackage
     Write-Verbose -Message "Package output $packageInstallOuput"
 
     # Clear Package Cache
-    Get-ChocoInstalledPackage 'Purge'
+    Get-ChocoInstalledPackage -Purge
 
     #refresh path varaible in powershell, as choco doesn"t, to pull in git
     $env:Path = [Environment]::GetEnvironmentVariable('Path','Machine')
@@ -287,7 +287,7 @@ function UninstallPackage
     Write-Verbose -Message "Package uninstall output $packageUninstallOuput "
 
     # Clear Package Cache
-    Get-ChocoInstalledPackage 'Purge'
+    Get-ChocoInstalledPackage -Purge
 
     #refresh path varaible in powershell, as choco doesn"t, to pull in git
     $env:Path = [Environment]::GetEnvironmentVariable('Path','Machine')
@@ -417,42 +417,54 @@ Function Upgrade-Package {
     $packageUpgradeOuput | ForEach-Object { Write-Verbose -Message $_ }
 
     # Clear Package Cache
-    Get-ChocoInstalledPackage 'Purge'
+    Get-ChocoInstalledPackage -Purge
 }
 
-function Get-ChocoInstalledPackage ($action) {
+function Get-ChocoInstalledPackage {
+    [CmdletBinding()]
+    param (
+        [switch]$Purge,
+        [switch]$NoCache
+    )
+
     $ChocoInstallLP = Join-Path -Path $env:ChocolateyInstall -ChildPath 'cache'
     if ( -not (Test-Path $ChocoInstallLP)){
         New-Item -Name 'cache' -Path $env:ChocolateyInstall -ItemType Directory | Out-Null
     }
     $ChocoInstallList = Join-Path -Path $ChocoInstallLP -ChildPath 'ChocoInstalled.xml'
 
-    if ($action -eq 'Purge') {
-        Remove-Item $ChocoInstallList -Force
-        $res = $true
-    } else {
+    if ( -not $Purge) {
         $PackageCacheSec = (Get-Date).AddSeconds('-60')
         if ( $PackageCacheSec -lt (Get-Item $ChocoInstallList -ErrorAction SilentlyContinue).LastWriteTime ) {
                 $res = Import-Clixml $ChocoInstallList
         } else {
-            choco list -lo -r | ConvertFrom-Csv -Header 'Name', 'Version' -Delimiter "|" -OutVariable res | Export-Clixml -Path $ChocoInstallList
+            $res = choco list -lo -r | ConvertFrom-Csv -Header 'Name', 'Version' -Delimiter "|"
+            if ( -not $NoCache){
+                $res | Export-Clixml -Path $ChocoInstallList
+            }
         }
+    } else {
+        Remove-Item $ChocoInstallList -Force
+        $res = $true
     }
 
     Return $res
 }
 
-function Get-ChocoVersion ($action) {
+function Get-ChocoVersion {
+    [CmdletBinding()]
+    param (
+        [switch]$Purge,
+        [switch]$NoCache
+    )
+
     $chocoInstallCache = Join-Path -Path $env:ChocolateyInstall -ChildPath 'cache'
     if ( -not (Test-Path $chocoInstallCache)){
         New-Item -Name 'cache' -Path $env:ChocolateyInstall -ItemType Directory | Out-Null
     }
     $chocoVersion = Join-Path -Path $chocoInstallCache -ChildPath 'ChocoVersion.xml'
 
-    if ($action -eq 'Purge') {
-        Remove-Item $chocoVersion -Force
-        $res = $true
-    } else {
+    if ( -not $Purge) {
         $cacheSec = (Get-Date).AddSeconds('-60')
         if ( $cacheSec -lt (Get-Item $chocoVersion -ErrorAction SilentlyContinue).LastWriteTime ) {
             $res = Import-Clixml $chocoVersion
@@ -461,8 +473,10 @@ function Get-ChocoVersion ($action) {
             $res = [System.Version]($cmd.Split('-')[0])
             $res | Export-Clixml -Path $chocoVersion
         }
+    } else {
+        Remove-Item $chocoVersion -Force
+        $res = $true
     }
-
     Return $res
 }
 
