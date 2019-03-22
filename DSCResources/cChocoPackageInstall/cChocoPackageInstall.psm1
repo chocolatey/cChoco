@@ -433,7 +433,7 @@ function Get-ChocoInstalledPackage {
     }
     $ChocoInstallList = Join-Path -Path $ChocoInstallLP -ChildPath 'ChocoInstalled.xml'
 
-    if ($Purge) {
+    if ($Purge.IsPresent) {
         Remove-Item $ChocoInstallList -Force
         $res = $true
     } else {
@@ -464,7 +464,7 @@ function Get-ChocoVersion {
     }
     $chocoVersion = Join-Path -Path $chocoInstallCache -ChildPath 'ChocoVersion.xml'
 
-    if ( -not $Purge) {
+    if ($Purge.IsPresent) {
         Remove-Item $chocoVersion -Force
         $res = $true
     } else {
