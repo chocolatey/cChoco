@@ -433,7 +433,10 @@ function Get-ChocoInstalledPackage {
     }
     $ChocoInstallList = Join-Path -Path $ChocoInstallLP -ChildPath 'ChocoInstalled.xml'
 
-    if ( -not $Purge) {
+    if ($Purge) {
+        Remove-Item $ChocoInstallList -Force
+        $res = $true
+    } else {
         $PackageCacheSec = (Get-Date).AddSeconds('-60')
         if ( $PackageCacheSec -lt (Get-Item $ChocoInstallList -ErrorAction SilentlyContinue).LastWriteTime ) {
                 $res = Import-Clixml $ChocoInstallList
@@ -443,9 +446,6 @@ function Get-ChocoInstalledPackage {
                 $res | Export-Clixml -Path $ChocoInstallList
             }
         }
-    } else {
-        Remove-Item $ChocoInstallList -Force
-        $res = $true
     }
 
     Return $res
@@ -465,6 +465,9 @@ function Get-ChocoVersion {
     $chocoVersion = Join-Path -Path $chocoInstallCache -ChildPath 'ChocoVersion.xml'
 
     if ( -not $Purge) {
+        Remove-Item $chocoVersion -Force
+        $res = $true
+    } else {
         $cacheSec = (Get-Date).AddSeconds('-60')
         if ( $cacheSec -lt (Get-Item $chocoVersion -ErrorAction SilentlyContinue).LastWriteTime ) {
             $res = Import-Clixml $chocoVersion
@@ -473,9 +476,6 @@ function Get-ChocoVersion {
             $res = [System.Version]($cmd.Split('-')[0])
             $res | Export-Clixml -Path $chocoVersion
         }
-    } else {
-        Remove-Item $chocoVersion -Force
-        $res = $true
     }
     Return $res
 }
