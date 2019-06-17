@@ -7,7 +7,7 @@
 
 [![Join the chat at https://gitter.im/chocolatey/cChoco](https://badges.gitter.im/chocolatey/cChoco.svg)](https://gitter.im/chocolatey/cChoco?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-This resource is aimed at getting and installing packages from the choco gallery.
+This resource is aimed at getting and installing packages using Chocolatey.
 
 The resource takes the name of the package and will then install that package.
 
@@ -17,7 +17,7 @@ See list of packages here: https://chocolatey.org/packages
 
 ## Contributing
 
-Happy to accept new features and fixes. Outstanding issues which can be worked on tagged HelpedWanted under issues.
+Happy to accept new features and fixes. Outstanding issues which can be worked on tagged `Up For Grabs` under issues.
 
 ### Submitting a PR
 
