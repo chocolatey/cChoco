@@ -54,3 +54,9 @@ To build:
 3. Merge development branch to master - `git checkout master`, `git merge development`;
 4. Tag master with new version - `git tag v<major.minor.patch>`;
 5. Push changes with tag `git push v<major.minor.patch>`
+
+## Known Issues / Troubleshooting
+
+### WS-Management - Exceeds the maximum envelope size allowed
+
+The maximum envelope size for WinRM is not sufficient for installing large packages. To increase the envelope size use `winrm set winrm/config @{MaxEnvelopeSizekb=”153600″}` - this exampe will increase it to 150MB.
