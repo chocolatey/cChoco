@@ -405,6 +405,8 @@ Function Upgrade-Package {
 }
 
 function Get-ChocoInstalledPackage ($action) {
+    $env:ChocolateyInstall = Split-Path -parent (Get-Command choco.exe).Source
+    
     $ChocoInstallLP = Join-Path -Path $env:ChocolateyInstall -ChildPath 'cache'
     if ( -not (Test-Path $ChocoInstallLP)){
         New-Item -Name 'cache' -Path $env:ChocolateyInstall -ItemType Directory | Out-Null
