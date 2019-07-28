@@ -227,26 +227,31 @@ function InstallPackage
 
     $env:Path = [Environment]::GetEnvironmentVariable('Path','Machine')
 
-    [string]$chocoinstallparams = '-y'
+    [string]$chocoParams = '-y'
     if ($pParams) {
-        $chocoinstallparams += " --params=`"$pParams`""
+        $chocoParams += " --params=`"$pParams`""
     }
     if ($pVersion) {
-        $chocoinstallparams += " --version=`"$pVersion`""
+        $chocoParams += " --version=`"$pVersion`""
     }
     if ($pSource) {
-        $chocoinstallparams += " --source=`"$pSource`""
+        $chocoParams += " --source=`"$pSource`""
     }
     if ($cParams) {
-        $chocoinstallparams += " $cParams"
+        $chocoParams += " $cParams"
     }
-    Write-Verbose -Message "Install command: 'choco install $pName $chocoinstallparams'"
+    # Check if Chocolatey version is Greater than 0.10.4, and add --no-progress 
+    if ((Get-ChocoVersion) -ge [System.Version]('0.10.4')){
+        $chocoParams += " --no-progress"
+    }
 
-    $packageInstallOuput = Invoke-Expression -Command "choco install $pName $chocoinstallparams"
-    Write-Verbose -Message "Package output $packageInstallOuput "
+    $cmd = "choco install $pName $chocoParams"
+    Write-Verbose -Message "Install command: '$cmd'"
+    $packageInstallOuput = Invoke-Expression -Command $cmd
+    Write-Verbose -Message "Package output $packageInstallOuput"
 
     # Clear Package Cache
-    Get-ChocoInstalledPackage 'Purge'
+    Get-ChocoInstalledPackage -Purge
 
     #refresh path varaible in powershell, as choco doesn"t, to pull in git
     $env:Path = [Environment]::GetEnvironmentVariable('Path','Machine')
@@ -254,6 +259,7 @@ function InstallPackage
 
 function UninstallPackage
 {
+    [Diagnostics.CodeAnalysis.SuppressMessage('PSAvoidUsingInvokeExpression','')]
     param(
         [Parameter(Position=0,Mandatory)]
         [string]$pName,
@@ -263,22 +269,26 @@ function UninstallPackage
 
     $env:Path = [Environment]::GetEnvironmentVariable('Path','Machine')
 
-    #Todo: Refactor
-    if (-not ($pParams))
-    {
-        Write-Verbose -Message 'Uninstalling Package Standard'
-        $packageUninstallOuput = choco uninstall $pName -y
+    [string]$chocoParams = "-y"
+    if ($pParams) {
+        $chocoParams += " --params=`"$pParams`""
     }
-    elseif ($pParams)
-    {
-        Write-Verbose -Message "Uninstalling Package with params $pParams"
-        $packageUninstallOuput = choco uninstall $pName --params="$pParams" -y
+    if ($pVersion) {
+        $chocoParams += " --version=`"$pVersion`""
     }
+    # Check if Chocolatey version is Greater than 0.10.4, and add --no-progress 
+    if ((Get-ChocoVersion) -ge [System.Version]('0.10.4')){
+        $chocoParams += " --no-progress"
+    }
+
+    $cmd = "choco uninstall $pName $chocoParams"
+    Write-Verbose -Message "Uninstalling $pName with: '$cmd'"
+    $packageUninstallOuput = Invoke-Expression -Command $cmd
 
     Write-Verbose -Message "Package uninstall output $packageUninstallOuput "
 
     # Clear Package Cache
-    Get-ChocoInstalledPackage 'Purge'
+    Get-ChocoInstalledPackage -Purge
 
     #refresh path varaible in powershell, as choco doesn"t, to pull in git
     $env:Path = [Environment]::GetEnvironmentVariable('Path','Machine')
@@ -325,14 +335,15 @@ Function Test-LatestVersionInstalled {
     )
     Write-Verbose -Message "Testing if $pName can be upgraded"
 
-    [string]$chocoupgradeparams = '--noop'
+    [string]$chocoParams = '--noop'
     if ($pSource) {
-        $chocoupgradeparams += " --source=`"$pSource`""
+        $chocoParams += " --source=`"$pSource`""
     }
 
-    Write-Verbose -Message "Testing if $pName can be upgraded: 'choco upgrade $pName $chocoupgradeparams'"
+    $cmd = "choco upgrade $pName $chocoParams"
+    Write-Verbose -Message "Testing if $pName can be upgraded: '$cmd'"
 
-    $packageUpgradeOuput = Invoke-Expression -Command "choco upgrade $pName $chocoupgradeparams"
+    $packageUpgradeOuput = Invoke-Expression -Command $cmd
     $packageUpgradeOuput | ForEach-Object {Write-Verbose -Message $_}
 
     if ($packageUpgradeOuput -match "$pName.*is the latest version available based on your source") {
@@ -379,17 +390,22 @@ Function Upgrade-Package {
     $env:Path = [Environment]::GetEnvironmentVariable('Path','Machine')
     Write-Verbose -Message "Path variables: $env:Path"
 
-    [string]$chocoupgradeparams = '-dv -y'
+    [string]$chocoParams = '-dv -y'
     if ($pParams) {
-        $chocoupgradeparams += " --params=`"$pParams`""
+        $chocoParams += " --params=`"$pParams`""
     }
     if ($pSource) {
-        $chocoupgradeparams += " --source=`"$pSource`""
+        $chocoParams += " --source=`"$pSource`""
     }
     if ($cParams) {
-        $chocoupgradeparams += " $cParams"
+        $chocoParams += " $cParams"
     }
-    $cmd = "choco upgrade $pName $chocoupgradeparams"
+    # Check if Chocolatey version is Greater than 0.10.4, and add --no-progress 
+    if ((Get-ChocoVersion) -ge [System.Version]('0.10.4')){
+        $chocoParams += " --no-progress"
+    }
+
+    $cmd = "choco upgrade $pName $chocoParams"
     Write-Verbose -Message "Upgrade command: '$cmd'"
 
     if (-not (IsPackageInstalled -pName $pName))
@@ -401,17 +417,23 @@ Function Upgrade-Package {
     $packageUpgradeOuput | ForEach-Object { Write-Verbose -Message $_ }
 
     # Clear Package Cache
-    Get-ChocoInstalledPackage 'Purge'
+    Get-ChocoInstalledPackage -Purge
 }
 
-function Get-ChocoInstalledPackage ($action) {
+function Get-ChocoInstalledPackage {
+    [CmdletBinding()]
+    param (
+        [switch]$Purge,
+        [switch]$NoCache
+    )
+
     $ChocoInstallLP = Join-Path -Path $env:ChocolateyInstall -ChildPath 'cache'
     if ( -not (Test-Path $ChocoInstallLP)){
         New-Item -Name 'cache' -Path $env:ChocolateyInstall -ItemType Directory | Out-Null
     }
     $ChocoInstallList = Join-Path -Path $ChocoInstallLP -ChildPath 'ChocoInstalled.xml'
 
-    if ($action -eq 'Purge') {
+    if ($Purge.IsPresent) {
         Remove-Item $ChocoInstallList -Force
         $res = $true
     } else {
@@ -419,10 +441,42 @@ function Get-ChocoInstalledPackage ($action) {
         if ( $PackageCacheSec -lt (Get-Item $ChocoInstallList -ErrorAction SilentlyContinue).LastWriteTime ) {
                 $res = Import-Clixml $ChocoInstallList
         } else {
-            choco list -lo -r | ConvertFrom-Csv -Header 'Name', 'Version' -Delimiter "|" -OutVariable res | Export-Clixml -Path $ChocoInstallList
+            $res = choco list -lo -r | ConvertFrom-Csv -Header 'Name', 'Version' -Delimiter "|"
+            if ( -not $NoCache){
+                $res | Export-Clixml -Path $ChocoInstallList
+            }
         }
     }
 
+    Return $res
+}
+
+function Get-ChocoVersion {
+    [CmdletBinding()]
+    param (
+        [switch]$Purge,
+        [switch]$NoCache
+    )
+
+    $chocoInstallCache = Join-Path -Path $env:ChocolateyInstall -ChildPath 'cache'
+    if ( -not (Test-Path $chocoInstallCache)){
+        New-Item -Name 'cache' -Path $env:ChocolateyInstall -ItemType Directory | Out-Null
+    }
+    $chocoVersion = Join-Path -Path $chocoInstallCache -ChildPath 'ChocoVersion.xml'
+
+    if ($Purge.IsPresent) {
+        Remove-Item $chocoVersion -Force
+        $res = $true
+    } else {
+        $cacheSec = (Get-Date).AddSeconds('-60')
+        if ( $cacheSec -lt (Get-Item $chocoVersion -ErrorAction SilentlyContinue).LastWriteTime ) {
+            $res = Import-Clixml $chocoVersion
+        } else {
+            $cmd = choco -v
+            $res = [System.Version]($cmd.Split('-')[0])
+            $res | Export-Clixml -Path $chocoVersion
+        }
+    }
     Return $res
 }
 
