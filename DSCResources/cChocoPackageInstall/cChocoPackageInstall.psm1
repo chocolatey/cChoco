@@ -28,6 +28,9 @@ function Get-TargetResource
         [ValidateNotNullOrEmpty()]
         [string]
         $Version,
+        [ValidateNotNull()]
+        [string]
+        $MinimumVersion,
         [ValidateNotNullOrEmpty()]
         [string]
         $Source
@@ -69,6 +72,9 @@ function Set-TargetResource
         [ValidateNotNullOrEmpty()]
         [string]
         $Version,
+        [ValidateNotNull()]
+        [string]
+        $MinimumVersion,
         [string]
         $Source,
         [String]
@@ -77,12 +83,27 @@ function Set-TargetResource
         $AutoUpgrade = $false
     )
     Write-Verbose -Message 'Start Set-TargetResource'
+    $isVersionPresent = $PSBoundParameters.ContainsKey('Version')
+    $isMinimumVersionPresent = $PSBoundParameters.ContainsKey('MinimumVersion')
+    if ($isVersionPresent -and $isMinimumVersionPresent ) {
+        throw "Cannot specify 'Version' and 'MinimumVersion' in the same configuration"
+    }
 
     if (-Not (Test-ChocoInstalled)) {
         throw "cChocoPackageInstall requires Chocolatey to be installed, consider using cChocoInstaller with 'dependson' in dsc config"
     }
 
     $isInstalled = IsPackageInstalled -pName $Name
+
+    #Determine the correct package version to use get to desired state
+    if ($isVersionPresent -or $isMinimumVersionPresent) {
+        if ($isVersionPresent) {
+            $versionToInstall = $PSBoundParameters['Version']
+        }
+        else {
+            $versionToInstall = $PSBoundParameters['MinimumVersion']
+        }
+    }
 
     #Uninstall if Ensure is set to absent and the package is installed
     if ($isInstalled) {
@@ -98,9 +119,15 @@ function Set-TargetResource
                 if ($Version) {
                     Write-Verbose -Message "Uninstalling $Name due to version mis-match"
                     UninstallPackage -pName $Name -pParams $Params
-                    Write-Verbose -Message "Re-Installing $Name with correct version $version"
-                    InstallPackage -pName $Name -pParams $Params -pVersion $Version -pSource $Source -cParams $chocoParams
-                } elseif ($AutoUpgrade) {
+                    Write-Verbose -Message "Re-Installing $Name with correct version $versionToInstall"
+                    InstallPackage -pName $Name -pParams $Params -pVersion $versionToInstall -pSource $Source -cParams $chocoParams
+                }
+                elseif ($MinimumVersion) {
+                    Write-Verbose -Message "Upgrading $Name becuase installed version is lower that the specified minimum"
+                    $chocoParams += " --version '$versionToInstall'"
+                    Upgrade-Package -pName $Name -pParams $Params -pSource $Source -cParams $chocoParams
+                }
+                elseif ($AutoUpgrade) {
                     Write-Verbose -Message "Upgrading $Name due to version mis-match"
                     Upgrade-Package -pName $Name -pParams $Params -pSource $Source -cParams $chocoParams
                 }
@@ -109,7 +136,7 @@ function Set-TargetResource
     } else {
         $whatIfShouldProcess = $pscmdlet.ShouldProcess("$Name", 'Install package from Chocolatey')
         if ($whatIfShouldProcess) {
-            InstallPackage -pName $Name -pParams $Params -pVersion $Version -pSource $Source -cParams $chocoParams
+            InstallPackage -pName $Name -pParams $Params -pVersion $versionToInstall -pSource $Source -cParams $chocoParams
         }
     }
 }
@@ -133,6 +160,9 @@ function Test-TargetResource
         [ValidateNotNullOrEmpty()]
         [string]
         $Version,
+        [ValidateNotNull()]
+        [string]
+        $MinimumVersion,
         [string]
         $Source,
         [ValidateNotNullOrEmpty()]
@@ -143,6 +173,11 @@ function Test-TargetResource
     )
 
     Write-Verbose -Message 'Start Test-TargetResource'
+    $isVersionPresent = $PSBoundParameters.ContainsKey('Version')
+    $isMinimumVersionPresent = $PSBoundParameters.ContainsKey('MinimumVersion')
+    if ($isVersionPresent -and $isMinimumVersionPresent ) {
+        throw "Cannot specify 'Version' and 'MinimumVersion' in the same configuration"
+    }
 
     if (-Not (Test-ChocoInstalled)) {
         return $false
@@ -161,7 +196,12 @@ function Test-TargetResource
     if ($version) {
         Write-Verbose -Message "Checking if $Name is installed and if version matches $version"
         $result = IsPackageInstalled -pName $Name -pVersion $Version
-    } else {
+    }
+    elseif ($MinimumVersion) {
+        Write-Verbose -Message "Checking if $Name is installed and version is $MinimumVersion or higher"
+        $result = IsPackageInstalled -pName $Name -pMinimumVersion $MinimumVersion
+    }
+    else {
         Write-Verbose -Message "Checking if $Name is installed"
 
         if ($AutoUpgrade -and $isInstalled) {
@@ -181,7 +221,7 @@ function Test-ChocoInstalled
     Write-Verbose -Message 'Test-ChocoInstalled'
     $env:Path = [Environment]::GetEnvironmentVariable('Path','Machine')
 
-    Write-Verbose -Message "Env:Path contains: $env:Path"
+    #Write-Verbose -Message "Env:Path contains: $env:Path"
     if (Test-Command -command choco)
     {
         Write-Verbose -Message 'YES - Choco is Installed'
@@ -296,23 +336,41 @@ function UninstallPackage
 
 function IsPackageInstalled
 {
+    [CmdletBinding(DefaultParameterSetName = 'RequiredVersion')]
     param(
-        [Parameter(Position=0,Mandatory)][string]$pName,
-        [Parameter(Position=1)][string]$pVersion
+        [Parameter(Position=0, Mandatory)]
+        [string]$pName,
+        
+        [Parameter(ParameterSetName = 'RequiredVersion')]
+        [string]$pVersion,
+        
+        [Parameter(ParameterSetName = 'MinimumVersion')]
+        [string]$pMinimumVersion
     )
     Write-Verbose -Message "Start IsPackageInstalled $pName"
 
     $env:Path = [Environment]::GetEnvironmentVariable('Path','Machine')
-    Write-Verbose -Message "Path variables: $env:Path"
+    #Write-Verbose -Message "Path variables: $env:Path"
 
     $installedPackages = Get-ChocoInstalledPackage
 
     if ($pVersion) {
-        Write-Verbose 'Comparing version'
-        $installedPackages = $installedPackages | Where-object { $_.Name -eq $pName -and $_.Version -eq $pVersion}
-    } else {
+        Write-Verbose 'Comparing required version'
+        $installedPackages = $installedPackages | Where-Object { $_.Name -eq $pName -and $_.Version -eq $pVersion}
+    }
+    elseif ($pMinimumVersion) {
+        Write-Verbose 'Comparing minimum version'
+        $comparablePackages = $installedPackages | Where-Object { $_.Name -eq $pName} | ForEach-Object {
+            # to do version comparision we first need to convert the version from string to System.Version
+            # we also need to ignore any pre release version, i.e. anythign after "-"
+            $v = [System.Version](($_.Version -split "-")[0])
+            $_ | Add-Member -MemberType NoteProperty -Name ComparableVersion -Value $v -PassThru
+        }
+        $installedPackages = $comparablePackages | Where-Object {$_.ComparableVersion -ge $pMinimumVersion}
+    }
+    else {
         Write-Verbose "Finding packages -eq $pName"
-        $installedPackages = $installedPackages | Where-object { $_.Name -eq $pName}
+        $installedPackages = $installedPackages | Where-Object { $_.Name -eq $pName}
     }
 
     $count = @($installedPackages).Count
@@ -325,6 +383,7 @@ function IsPackageInstalled
 
     return $false
 }
+
 
 Function Test-LatestVersionInstalled {
     [Diagnostics.CodeAnalysis.SuppressMessage('PSAvoidUsingInvokeExpression','')]
@@ -388,7 +447,7 @@ Function Upgrade-Package {
     )
 
     $env:Path = [Environment]::GetEnvironmentVariable('Path','Machine')
-    Write-Verbose -Message "Path variables: $env:Path"
+    #Write-Verbose -Message "Path variables: $env:Path"
 
     [string]$chocoParams = '-dv -y'
     if ($pParams) {
@@ -434,7 +493,7 @@ function Get-ChocoInstalledPackage {
     $ChocoInstallList = Join-Path -Path $ChocoInstallLP -ChildPath 'ChocoInstalled.xml'
 
     if ($Purge.IsPresent) {
-        Remove-Item $ChocoInstallList -Force
+        Remove-Item $ChocoInstallList -Force -ErrorAction SilentlyContinue
         $res = $true
     } else {
         $PackageCacheSec = (Get-Date).AddSeconds('-60')

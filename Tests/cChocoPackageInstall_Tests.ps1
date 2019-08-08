@@ -76,6 +76,24 @@ Describe -Name "Testing $ResourceName loaded from $ResourceFile" -Fixture {
         It -name "Test-TargetResource -ensure 'Absent' -version '1.0.0' -AutoUpgrade should return True" -test {
             Test-TargetResource @Scenario5 | Should Be $True
         }
+
+        $Scenario6 = @{
+            Name        = 'GoogleChrome'
+            Ensure      = 'Absent'
+            MinimumVersion     = '1.0'
+        }
+        It -name "Test-TargetResource -ensure 'Absent' -MinimumVersion '1.0' should return True" -test {
+            Test-TargetResource @Scenario6 | Should Be $True
+        }
+
+        $Scenario7 = @{
+            Name           = 'GoogleChrome'
+            Ensure         = 'Present'
+            MinimumVersion = '1.0'
+        }
+        It -name "Test-TargetResource -ensure 'Present' -MinimumVersion '1.0' should return False" -test {
+            Test-TargetResource @Scenario7 | Should Be $false
+        }
     }
 
     Context -Name "Package is installed with version 1.0.0" -Fixture {
@@ -120,6 +138,26 @@ Describe -Name "Testing $ResourceName loaded from $ResourceFile" -Fixture {
 
         It -name "Test-TargetResource -ensure 'Present' -version '1.0.1' should return False" -test {
             Test-TargetResource @Scenario4 | Should Be $False
+        }
+
+        $Scenario5 = @{
+            Name    = 'GoogleChrome'
+            Ensure  = 'Present'
+            MinimumVersion = '0.9.0'
+        }
+
+        It -name "Test-TargetResource -ensure 'Present' -MinimumVersion '0.9.0' should return True" -test {
+            Test-TargetResource @Scenario5 | Should Be $true
+        }
+
+        $Scenario6 = @{
+            Name    = 'GoogleChrome'
+            Ensure  = 'Present'
+            MinimumVersion = '1.0.1'
+        }
+
+        It -name "Test-TargetResource -ensure 'Present' -MinimumVersion '1.0.1' should return False" -test {
+            Test-TargetResource @Scenario6 | Should Be $false
         }
     }
 }
