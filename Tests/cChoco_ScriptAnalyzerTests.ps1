@@ -30,7 +30,14 @@ if ($Modules.count -gt 0) {
       Context “Testing Module '$($module.FullName)'” {
         foreach ($rule in $rules) {
           It “passes the PSScriptAnalyzer Rule $rule“ {
-            (Invoke-ScriptAnalyzer -Path $module.FullName -IncludeRule $rule.RuleName ).Count | Should Be 0
+            $Failures = Invoke-ScriptAnalyzer -Path $module.FullName -IncludeRule $rule.RuleName
+            $FailuresCount = ($Failures | Measure-Object).Count
+            if ($FailuresCount -gt 0) {
+              $Failures | ForEach-Object {
+                Write-Warning "Script: $($_.ScriptName), Line $($_.Line), Message $($_.Message)"
+              }
+            }
+            $FailuresCount | Should Be 0
           }
         }
       }

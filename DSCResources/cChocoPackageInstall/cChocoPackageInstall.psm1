@@ -221,7 +221,7 @@ function Test-ChocoInstalled
     Write-Verbose -Message 'Test-ChocoInstalled'
     $env:Path = [Environment]::GetEnvironmentVariable('Path','Machine')
 
-    #Write-Verbose -Message "Env:Path contains: $env:Path"
+    Write-Verbose -Message "Env:Path contains: $env:Path"
     if (Test-Command -command choco)
     {
         Write-Verbose -Message 'YES - Choco is Installed'
@@ -337,6 +337,7 @@ function UninstallPackage
 function IsPackageInstalled
 {
     [CmdletBinding(DefaultParameterSetName = 'RequiredVersion')]
+    [OutputType([bool])]
     param(
         [Parameter(Position=0, Mandatory)]
         [string]$pName,
@@ -350,7 +351,7 @@ function IsPackageInstalled
     Write-Verbose -Message "Start IsPackageInstalled $pName"
 
     $env:Path = [Environment]::GetEnvironmentVariable('Path','Machine')
-    #Write-Verbose -Message "Path variables: $env:Path"
+    Write-Verbose -Message "Path variables: $env:Path"
 
     $installedPackages = Get-ChocoInstalledPackage
 
@@ -447,7 +448,7 @@ Function Upgrade-Package {
     )
 
     $env:Path = [Environment]::GetEnvironmentVariable('Path','Machine')
-    #Write-Verbose -Message "Path variables: $env:Path"
+    Write-Verbose -Message "Path variables: $env:Path"
 
     [string]$chocoParams = '-dv -y'
     if ($pParams) {
