@@ -1,0 +1,8 @@
+[ClassVersion("1.0.0.0"), FriendlyName("cChocoConfig")]
+class cChocoConfig : OMI_BaseResource
+{
+    [Key] String Key;
+    [Write] String Value;
+    [Write,ValueMap{"Present", "Absent"},Values{"Present", "Absent"}] String Ensure;
+    [Write] Boolean QueryXML;
+};
