@@ -1,5 +1,4 @@
-﻿# Copyright (c) 2017 Chocolatey Software, Inc.
-# Copyright (c) 2013 - 2017 Lawrence Gripper & original authors/contributors from https://github.com/chocolatey/cChoco
+﻿# Copyright (c) 2013 - 2017 Lawrence Gripper & original authors/contributors from https://github.com/chocolatey/cChoco
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -240,7 +239,7 @@ function InstallPackage
         $chocoinstallparams += " $cParams"
     }
     Write-Verbose -Message "Install command: 'choco install $pName $chocoinstallparams'"
-    $packageInstallOuput = Invoke-ChocoLatey "install $pName $chocoinstallparams"
+    $packageInstallOuput = Invoke-Chocolatey "install $pName $chocoinstallparams"
     Write-Verbose -Message "Package output $packageInstallOuput "
 
     #refresh path varaible in powershell, as choco doesn"t, to pull in git
@@ -325,7 +324,7 @@ Function Test-LatestVersionInstalled {
 
     Write-Verbose -Message "Testing if $pName can be upgraded: 'choco upgrade $pName $chocoupgradeparams'"
 
-    $packageUpgradeOuput = Invoke-Chocolatey "upgrade $pName $chocoupgradeparams"
+    $packageUpgradeOuput = Invoke-Chocolatey "choco upgrade $pName $chocoupgradeparams"
     $packageUpgradeOuput | ForEach-Object {Write-Verbose -Message $_}
 
     if ($packageUpgradeOuput -match "$pName.*is the latest version available based on your source") {
@@ -396,7 +395,7 @@ Function Upgrade-Package {
 }
 
 function Get-ChocoInstalledPackage {
-    Return (choco list -lo -r | ConvertFrom-Csv -Header 'Name', 'Version' -Delimiter "|")
+     (choco list -lo -r | ConvertFrom-Csv -Header 'Name', 'Version' -Delimiter "|")
 }
 
 
