@@ -242,6 +242,10 @@ function InstallPackage
     $packageInstallOuput = Invoke-Chocolatey "install $pName $chocoinstallparams"
     Write-Verbose -Message "Package output $packageInstallOuput "
 
+
+     # Clear Package Cache
+    Get-ChocoInstalledPackage 'Purge'
+
     #refresh path varaible in powershell, as choco doesn"t, to pull in git
     $env:Path = [Environment]::GetEnvironmentVariable('Path','Machine')
 }
@@ -271,6 +275,9 @@ function UninstallPackage
 
     Write-Verbose -Message "Package uninstall output $packageUninstallOuput "
 
+     # Clear Package Cache
+    Get-ChocoInstalledPackage 'Purge'
+    
     #refresh path varaible in powershell, as choco doesn"t, to pull in git
     $env:Path = [Environment]::GetEnvironmentVariable('Path','Machine')
 }
@@ -324,7 +331,7 @@ Function Test-LatestVersionInstalled {
 
     Write-Verbose -Message "Testing if $pName can be upgraded: 'choco upgrade $pName $chocoupgradeparams'"
 
-    $packageUpgradeOuput = Invoke-Chocolatey "choco upgrade $pName $chocoupgradeparams"
+    $packageUpgradeOuput = Invoke-Chocolatey "upgrade $pName $chocoupgradeparams"
     $packageUpgradeOuput | ForEach-Object {Write-Verbose -Message $_}
 
     if ($packageUpgradeOuput -match "$pName.*is the latest version available based on your source") {
