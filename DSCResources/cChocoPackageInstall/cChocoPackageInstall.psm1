@@ -486,7 +486,7 @@ function Upgrade-Package {
         $chocoParams += " --params=`"$pParams`""
     }
     if ($pVersion) {
-        $chocoinstallparams += " --version=`"$pVersion`""
+        $chocoupgradeparams += " --version=`"$pVersion`""
     }
     if ($pSource) {
         $chocoParams += " --source=`"$pSource`""
