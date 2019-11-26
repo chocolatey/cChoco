@@ -80,7 +80,9 @@ function Set-TargetResource
         [String]
         $chocoParams,
         [bool]
-        $AutoUpgrade = $false
+        $AutoUpgrade = $false,
+        [bool]
+        $UpgradeLowerVersions = $false
     )
     Write-Verbose -Message 'Start Set-TargetResource'
     $isVersionPresent = $PSBoundParameters.ContainsKey('Version')
@@ -117,10 +119,25 @@ function Set-TargetResource
             $whatIfShouldProcess = $pscmdlet.ShouldProcess("$Name", 'Installing / upgrading package from Chocolatey')
             if ($whatIfShouldProcess) {
                 if ($Version) {
-                    Write-Verbose -Message "Uninstalling $Name due to version mis-match"
-                    UninstallPackage -pName $Name -pParams $Params
-                    Write-Verbose -Message "Re-Installing $Name with correct version $versionToInstall"
-                    InstallPackage -pName $Name -pParams $Params -pVersion $versionToInstall -pSource $Source -cParams $chocoParams
+                    # Version check on the existing package to ensure we don't attempt to upgrade in a downgrade situation
+                    $installedPackages = @(Get-ChocoInstalledPackage | Where-object { $_.Name -eq $Name })
+                    $packageCount = $installedPackages.Count
+                    Write-Verbose "Found $packageCount matching package(s) for upgrade"
+                    $canUpgrade = $packageCount -eq 1 
+                    if ($canUpgrade) {
+                        [version] $installedVersion = $installedPackages[0].Version
+                        $canUpgrade = $installedVersion.CompareTo([version]$Version) -le 0
+                    }
+                    if ($UpgradeLowerVersions -and $canUpgrade) {
+                        Write-Verbose -Message "Upgrading $Name to version $Version"
+                        Upgrade-Package -pName $Name -pParams $Params -pVersion $Version
+                    }
+                    else {
+                        Write-Verbose -Message "Uninstalling $Name due to version mis-match"
+                        UninstallPackage -pName $Name -pParams $Params
+                        Write-Verbose -Message "Re-Installing $Name with correct version $version"
+                        InstallPackage -pName $Name -pParams $Params -pVersion $Version -pSource $Source -cParams $chocoParams
+                    }
                 }
                 elseif ($MinimumVersion) {
                     Write-Verbose -Message "Upgrading $Name because installed version is lower that the specified minimum"
@@ -169,7 +186,9 @@ function Test-TargetResource
         [String]
         $chocoParams,
         [bool]
-        $AutoUpgrade = $false
+        $AutoUpgrade = $false,
+        [bool]
+        $UpgradeLowerVersions = $false
     )
 
     Write-Verbose -Message 'Start Test-TargetResource'
@@ -443,7 +462,7 @@ function global:Write-Host
     Write-Verbose -Message $Object
 }
 
-Function Upgrade-Package {
+function Upgrade-Package {
     [Diagnostics.CodeAnalysis.SuppressMessage('PSUseApprovedVerbs','')]
     [Diagnostics.CodeAnalysis.SuppressMessage('PSAvoidUsingInvokeExpression','')]
     param(
@@ -452,8 +471,10 @@ Function Upgrade-Package {
         [Parameter(Position=1)]
         [string]$pParams,
         [Parameter(Position=2)]
-        [string]$pSource,
+        [string]$pVersion,
         [Parameter(Position=3)]
+        [string]$pSource,
+        [Parameter(Position=4)]
         [string]$cParams
     )
 
@@ -463,6 +484,9 @@ Function Upgrade-Package {
     [string]$chocoParams = '-dv -y'
     if ($pParams) {
         $chocoParams += " --params=`"$pParams`""
+    }
+    if ($pVersion) {
+        $chocoinstallparams += " --version=`"$pVersion`""
     }
     if ($pSource) {
         $chocoParams += " --source=`"$pSource`""
