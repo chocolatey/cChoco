@@ -165,10 +165,13 @@ function Test-TargetResource
         Write-Verbose -Message "Checking if $Name is installed"
 
         if ($AutoUpgrade -and $isInstalled) {
-            if ($Source){
-                [string]$pSource = "-pSource `"$Source`""
+            $testParams = @{
+                pName = $Name
             }
-            $result = Test-LatestVersionInstalled -pName $Name $pSource
+            if ($Source){
+                $testParams.pSource = $Source
+            }
+            $result = Test-LatestVersionInstalled @testParams
         } else {
             $result = $isInstalled
         }
