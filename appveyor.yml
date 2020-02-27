@@ -8,7 +8,7 @@ install:
 
 environment:
   nugetKey:
-    secure: cTU7bDH5E95cI/Zj36CfMrrgnnW/fmEd1S9+cqmBlV3P0GMUnluLcydTWgDK7Usu
+    secure: hwpi8ydkuOj0J22HAalIy+mRq4kxDKH7EjtCqwQ5V96svUwfostPY00EIp2HtNhZ
   github_access_token:
     secure: Xk7jTkdE82qskQy9WPZK0zSafSjT6gK1SYxH8m4Aa8muCMQ4ACkkztJ3toh9DFlS
   ModuleName: cChoco
