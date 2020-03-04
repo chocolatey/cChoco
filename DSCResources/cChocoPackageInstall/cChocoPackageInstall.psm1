@@ -123,8 +123,8 @@ function Set-TargetResource
                     InstallPackage -pName $Name -pParams $Params -pVersion $versionToInstall -pSource $Source -cParams $chocoParams
                 }
                 elseif ($MinimumVersion) {
-                    Write-Verbose -Message "Upgrading $Name becuase installed version is lower that the specified minimum"
-                    $chocoParams += " --version '$versionToInstall'"
+                    Write-Verbose -Message "Upgrading $Name because installed version is lower that the specified minimum"
+                    $chocoParams += " --version='$versionToInstall'"
                     Upgrade-Package -pName $Name -pParams $Params -pSource $Source -cParams $chocoParams
                 }
                 elseif ($AutoUpgrade) {
@@ -337,7 +337,7 @@ function UninstallPackage
 function IsPackageInstalled
 {
     [CmdletBinding(DefaultParameterSetName = 'RequiredVersion')]
-    [OutputType([bool])]
+    [OutputType([Boolean])]
     param(
         [Parameter(Position=0, Mandatory)]
         [string]$pName,
@@ -351,7 +351,7 @@ function IsPackageInstalled
     Write-Verbose -Message "Start IsPackageInstalled $pName"
 
     $env:Path = [Environment]::GetEnvironmentVariable('Path','Machine')
-    Write-Verbose -Message "Path variables: $env:Path"
+    #Write-Verbose -Message "Path variables: $env:Path"
 
     $installedPackages = Get-ChocoInstalledPackage
 
@@ -384,7 +384,6 @@ function IsPackageInstalled
 
     return $false
 }
-
 
 Function Test-LatestVersionInstalled {
     [Diagnostics.CodeAnalysis.SuppressMessage('PSAvoidUsingInvokeExpression','')]
@@ -448,7 +447,7 @@ Function Upgrade-Package {
     )
 
     $env:Path = [Environment]::GetEnvironmentVariable('Path','Machine')
-    Write-Verbose -Message "Path variables: $env:Path"
+    #Write-Verbose -Message "Path variables: $env:Path"
 
     [string]$chocoParams = '-dv -y'
     if ($pParams) {
@@ -494,7 +493,7 @@ function Get-ChocoInstalledPackage {
     $ChocoInstallList = Join-Path -Path $ChocoInstallLP -ChildPath 'ChocoInstalled.xml'
 
     if ($Purge.IsPresent) {
-        Remove-Item $ChocoInstallList -Force -ErrorAction SilentlyContinue
+        Remove-Item $ChocoInstallList -Force
         $res = $true
     } else {
         $PackageCacheSec = (Get-Date).AddSeconds('-60')
