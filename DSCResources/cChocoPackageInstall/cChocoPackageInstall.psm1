@@ -351,7 +351,7 @@ function IsPackageInstalled
     Write-Verbose -Message "Start IsPackageInstalled $pName"
 
     $env:Path = [Environment]::GetEnvironmentVariable('Path','Machine')
-    #Write-Verbose -Message "Path variables: $env:Path"
+    Write-Verbose -Message "Path variables: $($env:Path)"
 
     $installedPackages = Get-ChocoInstalledPackage
 
@@ -361,9 +361,14 @@ function IsPackageInstalled
     }
     elseif ($pMinimumVersion) {
         Write-Verbose 'Comparing minimum version'
+        # version comparison can be done with [System.Version] but this lacks the ability to compare pre-release versions
+        # because of this limitation MinimumVersion cannot be used in conjuction with pre-release packages
+        $pre = ($pMinimumVersion -split "-")[1]
+        if ($pre) {
+            throw "MinimumVersion does not support comparing pre-releases, please use Version parameter instead"
+        }
         $comparablePackages = $installedPackages | Where-Object { $_.Name -eq $pName} | ForEach-Object {
-            # to do version comparision we first need to convert the version from string to System.Version
-            # we also need to ignore any pre release version, i.e. anythign after "-"
+            # ignoring pre-release as per above comment
             $v = [System.Version](($_.Version -split "-")[0])
             $_ | Add-Member -MemberType NoteProperty -Name ComparableVersion -Value $v -PassThru
         }
@@ -447,7 +452,7 @@ Function Upgrade-Package {
     )
 
     $env:Path = [Environment]::GetEnvironmentVariable('Path','Machine')
-    #Write-Verbose -Message "Path variables: $env:Path"
+    Write-Verbose -Message "Path variables: $($env:Path)"
 
     [string]$chocoParams = '-dv -y'
     if ($pParams) {
