@@ -22,18 +22,17 @@ function Get-TargetResource
         [ValidateNotNullOrEmpty()]
         [string]
         $Name,
-        [ValidateNotNullOrEmpty()]
         [string]
         $Params,
-        [ValidateNotNullOrEmpty()]
-        [string]
+        [string[]]
         $Version,
-        [ValidateNotNullOrEmpty()]
         [string]
         $Source
     )
 
     Write-Verbose -Message 'Start Get-TargetResource'
+    $env:Path = [Environment]::GetEnvironmentVariable('Path','Machine')
+    Write-Verbose -Message "Path variables: $env:Path"
 
     if (-Not (Test-ChocoInstalled)) {
         throw "cChocoPackageInstall requires Chocolatey to be installed, consider using cChocoInstaller with 'dependson' in dsc config"
@@ -67,39 +66,65 @@ function Set-TargetResource
         [string]
         $Params,
         [ValidateNotNullOrEmpty()]
-        [string]
+        [string[]]
         $Version,
         [string]
         $Source,
-        [String]
+        [string]
         $chocoParams,
         [bool]
         $AutoUpgrade = $false
     )
     Write-Verbose -Message 'Start Set-TargetResource'
+    $env:Path = [Environment]::GetEnvironmentVariable('Path','Machine')
+    Write-Verbose -Message "Path variables: $env:Path"
 
     if (-Not (Test-ChocoInstalled)) {
         throw "cChocoPackageInstall requires Chocolatey to be installed, consider using cChocoInstaller with 'dependson' in dsc config"
     }
 
-    $isInstalled = IsPackageInstalled -pName $Name
+    if ($Version) {
+        $isInstalled = $true
+        $Version | ForEach-Object {$isInstalled = $isInstalled -and $(IsPackageInstalled -pName $Name -pVersion $_)}
+    } else {
+        $isInstalled = IsPackageInstalled -pName $Name
+    }
+
+    $isInstalledType = IsPackageInstalled -pName $Name
 
     #Uninstall if Ensure is set to absent and the package is installed
-    if ($isInstalled) {
+    if ($isInstalledType) {
         if ($Ensure -eq 'Absent') {
             $whatIfShouldProcess = $pscmdlet.ShouldProcess("$Name", 'Remove Chocolatey package')
             if ($whatIfShouldProcess) {
                 Write-Verbose -Message "Removing $Name as ensure is set to absent"
                 UninstallPackage -pName $Name -pParams $Params
             }
-        } else {
+        } elseif (-not $isInstalled) {
             $whatIfShouldProcess = $pscmdlet.ShouldProcess("$Name", 'Installing / upgrading package from Chocolatey')
             if ($whatIfShouldProcess) {
                 if ($Version) {
-                    Write-Verbose -Message "Uninstalling $Name due to version mis-match"
-                    UninstallPackage -pName $Name -pParams $Params
-                    Write-Verbose -Message "Re-Installing $Name with correct version $version"
-                    InstallPackage -pName $Name -pParams $Params -pVersion $Version -pSource $Source -cParams $chocoParams
+                    # get installed version
+                    $installedVersions = $(Get-ChocoInstalledPackage | Where-object {$_.Name -eq $Name}).Version
+                    # build list to install and to remove
+                    if (-not $installedVersions) {
+                        $installedVersions = @()
+                    }
+                    Write-Verbose -Message "Versions installed $installedVersions"
+                    $VersionsToRemove = $(Compare-Object -ReferenceObject $Version -DifferenceObject $installedVersions | Where-Object {$_.SideIndicator -eq "=>"}).InputObject
+                    Write-Verbose -Message "Versions to Remove $VersionsToRemove"
+                    $VersionsToInstall = $(Compare-Object -ReferenceObject $Version -DifferenceObject $installedVersions | Where-Object {$_.SideIndicator -eq "<="}).InputObject
+                    Write-Verbose -Message "Versions to Install $VersionsToInstall"
+                    # uninstall not required versions
+                    foreach ($ver in $VersionsToRemove) {
+                        Write-Verbose -Message "Uninstalling $Name $ver due to version mis-match"
+                        UninstallPackage -pName $Name -pParams $Params -pVersion $ver
+                    }
+                    # install required
+                    foreach ($ver in $VersionsToInstall) {
+                        Write-Verbose -Message "Installing $Name $ver"
+                        InstallPackage -pName $Name -pParams $Params -pVersion $ver -pSource $Source -cParams $chocoParams
+                    }
                 } elseif ($AutoUpgrade) {
                     Write-Verbose -Message "Upgrading $Name due to version mis-match"
                     Upgrade-Package -pName $Name -pParams $Params -pSource $Source -cParams $chocoParams
@@ -109,7 +134,13 @@ function Set-TargetResource
     } else {
         $whatIfShouldProcess = $pscmdlet.ShouldProcess("$Name", 'Install package from Chocolatey')
         if ($whatIfShouldProcess) {
-            InstallPackage -pName $Name -pParams $Params -pVersion $Version -pSource $Source -cParams $chocoParams
+            if ($Version) {
+                $Version | ForEach-Object {
+                    InstallPackage -pName $Name -pParams $Params -pVersion $_ -pSource $Source -cParams $chocoParams
+                }
+            } else {
+                InstallPackage -pName $Name -pParams $Params -pSource $Source -cParams $chocoParams
+            }
         }
     }
 }
@@ -127,42 +158,34 @@ function Test-TargetResource
         [ValidateSet('Present','Absent')]
         [string]
         $Ensure='Present',
-        [ValidateNotNullOrEmpty()]
         [string]
         $Params,
-        [ValidateNotNullOrEmpty()]
-        [string]
+        [string[]]
         $Version,
         [string]
         $Source,
         [ValidateNotNullOrEmpty()]
-        [String]
+        [string]
         $chocoParams,
         [bool]
         $AutoUpgrade = $false
     )
 
     Write-Verbose -Message 'Start Test-TargetResource'
+    $env:Path = [Environment]::GetEnvironmentVariable('Path','Machine')
+    Write-Verbose -Message "Path variables: $env:Path"
 
     if (-Not (Test-ChocoInstalled)) {
         return $false
     }
 
-    $isInstalled = IsPackageInstalled -pName $Name
-
-    if ($ensure -eq 'Absent') {
-         if ($isInstalled -eq $false) {
-            return $true
-         } else {
-            return $false
-         }
-    }
-
-    if ($version) {
-        Write-Verbose -Message "Checking if $Name is installed and if version matches $version"
-        $result = IsPackageInstalled -pName $Name -pVersion $Version
+    if ($Version) {
+        $isInstalled = $true
+        $Version.ForEach({
+          $isInstalled = $isInstalled -and $(IsPackageInstalled -pName $Name -pVersion $_)
+        })
     } else {
-        Write-Verbose -Message "Checking if $Name is installed"
+        $isInstalled = IsPackageInstalled -pName $Name
 
         if ($AutoUpgrade -and $isInstalled) {
             $testParams = @{
@@ -171,14 +194,18 @@ function Test-TargetResource
             if ($Source){
                 $testParams.pSource = $Source
             }
-            $result = Test-LatestVersionInstalled @testParams
-        } else {
-            $result = $isInstalled
+            $isInstalled = Test-LatestVersionInstalled @testParams
         }
     }
 
-    Return $result
+    Write-Verbose -Message 'End Test-TargetResource'
+    if ($ensure -eq 'Absent') {
+        return -not $isInstalled
+    } else {
+        return $isInstalled
+    }
 }
+
 function Test-ChocoInstalled
 {
     Write-Verbose -Message 'Test-ChocoInstalled'
@@ -230,7 +257,7 @@ function InstallPackage
 
     $env:Path = [Environment]::GetEnvironmentVariable('Path','Machine')
 
-    [string]$chocoParams = '-y'
+    [string]$chocoParams = "-y -m"
     if ($pParams) {
         $chocoParams += " --params=`"$pParams`""
     }
@@ -243,7 +270,7 @@ function InstallPackage
     if ($cParams) {
         $chocoParams += " $cParams"
     }
-    # Check if Chocolatey version is Greater than 0.10.4, and add --no-progress 
+    # Check if Chocolatey version is Greater than 0.10.4, and add --no-progress
     if ((Get-ChocoVersion) -ge [System.Version]('0.10.4')){
         $chocoParams += " --no-progress"
     }
@@ -267,7 +294,9 @@ function UninstallPackage
         [Parameter(Position=0,Mandatory)]
         [string]$pName,
         [Parameter(Position=1)]
-        [string]$pParams
+        [string]$pParams,
+        [Parameter(Position=2)]
+        [string]$pVersion
     )
 
     $env:Path = [Environment]::GetEnvironmentVariable('Path','Machine')
@@ -279,7 +308,7 @@ function UninstallPackage
     if ($pVersion) {
         $chocoParams += " --version=`"$pVersion`""
     }
-    # Check if Chocolatey version is Greater than 0.10.4, and add --no-progress 
+    # Check if Chocolatey version is Greater than 0.10.4, and add --no-progress
     if ((Get-ChocoVersion) -ge [System.Version]('0.10.4')){
         $chocoParams += " --no-progress"
     }
@@ -311,7 +340,7 @@ function IsPackageInstalled
     $installedPackages = Get-ChocoInstalledPackage
 
     if ($pVersion) {
-        Write-Verbose 'Comparing version'
+        Write-Verbose "Comparing version $pVersion"
         $installedPackages = $installedPackages | Where-object { $_.Name -eq $pName -and $_.Version -eq $pVersion}
     } else {
         Write-Verbose "Finding packages -eq $pName"
@@ -320,8 +349,7 @@ function IsPackageInstalled
 
     $count = @($installedPackages).Count
     Write-Verbose "Found $Count matching packages"
-    if ($Count -gt 0)
-    {
+    if ($Count -gt 0) {
         $installedPackages | ForEach-Object {Write-Verbose -Message "Found: $($_.Name) with version $($_.Version)"}
         return $true
     }
@@ -359,6 +387,7 @@ Function Test-LatestVersionInstalled {
 ##attempting to work around the issues with Chocolatey calling Write-host in its scripts.
 function global:Write-Host
 {
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSAvoidGlobalFunctions")]
     Param(
         [Parameter(Mandatory, Position = 0)]
         [Object]
@@ -369,7 +398,6 @@ function global:Write-Host
         $ForegroundColor,
         [ConsoleColor]
         $BackgroundColor
-
     )
 
     #Override default Write-Host...
@@ -403,7 +431,7 @@ Function Upgrade-Package {
     if ($cParams) {
         $chocoParams += " $cParams"
     }
-    # Check if Chocolatey version is Greater than 0.10.4, and add --no-progress 
+    # Check if Chocolatey version is Greater than 0.10.4, and add --no-progress
     if ((Get-ChocoVersion) -ge [System.Version]('0.10.4')){
         $chocoParams += " --no-progress"
     }
@@ -411,8 +439,7 @@ Function Upgrade-Package {
     $cmd = "choco upgrade $pName $chocoParams"
     Write-Verbose -Message "Upgrade command: '$cmd'"
 
-    if (-not (IsPackageInstalled -pName $pName))
-    {
+    if (-not (IsPackageInstalled -pName $pName)) {
         throw "$pName is not installed, you cannot upgrade"
     }
 

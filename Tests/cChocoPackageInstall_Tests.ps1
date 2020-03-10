@@ -54,7 +54,7 @@ Describe -Name "Testing $ResourceName loaded from $ResourceFile" -Fixture {
             Ensure  = 'Absent'
             Version = '1.0.0'
         }
-        It -name "Test-TargetResource -ensure 'Absent' -version '1.0.0' should return True" -test {
+        It -name "Test-TargetResource -ensure 'Absent' -version @('1.0.0') should return True" -test {
             Test-TargetResource @Scenario3 | Should Be $True
         }
 
@@ -73,7 +73,7 @@ Describe -Name "Testing $ResourceName loaded from $ResourceFile" -Fixture {
             Version     = '1.0'
             AutoUpgrade = $True
         }
-        It -name "Test-TargetResource -ensure 'Absent' -version '1.0.0' -AutoUpgrade should return True" -test {
+        It -name "Test-TargetResource -ensure 'Absent' -version @('1.0.0') -AutoUpgrade should return True" -test {
             Test-TargetResource @Scenario5 | Should Be $True
         }
     }
@@ -108,7 +108,7 @@ Describe -Name "Testing $ResourceName loaded from $ResourceFile" -Fixture {
             Version = '1.0.0'
         }
 
-        It -name "Test-TargetResource -ensure 'Present' -version '1.0.0' should return True" -test {
+        It -name "Test-TargetResource -ensure 'Present' -version @('1.0.0') should return True" -test {
             Test-TargetResource @Scenario3 | Should Be $True
         }
 
@@ -118,7 +118,7 @@ Describe -Name "Testing $ResourceName loaded from $ResourceFile" -Fixture {
             Version = '1.0.1'
         }
 
-        It -name "Test-TargetResource -ensure 'Present' -version '1.0.1' should return False" -test {
+        It -name "Test-TargetResource -ensure 'Present' -version @('1.0.1') should return False" -test {
             Test-TargetResource @Scenario4 | Should Be $False
         }
     }
