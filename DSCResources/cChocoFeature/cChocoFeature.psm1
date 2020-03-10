@@ -77,7 +77,7 @@ function Set-TargetResource
             Write-Verbose "Enabling choco feature $FeatureName."
             choco feature enable -n $FeatureName
         }
-        else 
+        else
         {
             Write-Verbose "Disabling choco feature $FeatureName."
             choco feature disable -n $FeatureName
@@ -131,7 +131,7 @@ function Test-TargetResource
 .Description
 Query chocolatey features.
 #>
-function Get-ChocoFeature 
+function Get-ChocoFeature
 {
     [OutputType([PSCustomObject])]
     param(

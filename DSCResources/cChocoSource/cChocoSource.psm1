@@ -52,7 +52,7 @@ function Get-TargetResource
 
 function Set-TargetResource
 {
-    [CmdletBinding()]
+    # [CmdletBinding(SupportsShouldProcess)]
     param
     (
         [parameter(Mandatory = $true)]
@@ -134,7 +134,7 @@ function Test-TargetResource
 
     Write-Verbose "Start Test-TargetResource"
 
-	if($env:ChocolateyInstall -eq "" -or $env:ChocolateyInstall -eq $null)
+	if($env:ChocolateyInstall -eq "" -or $null -eq $env:ChocolateyInstall)
 	{
 		$exe = (get-command choco).Source
 		$chocofolder = $exe.Substring(0,$exe.LastIndexOf("\"))
