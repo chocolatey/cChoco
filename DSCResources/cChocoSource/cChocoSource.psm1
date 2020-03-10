@@ -52,7 +52,7 @@ function Get-TargetResource
 
 function Set-TargetResource
 {
-    [CmdletBinding()]
+    # [CmdletBinding(SupportsShouldProcess)]
     param
     (
         [parameter(Mandatory = $true)]
@@ -76,34 +76,23 @@ function Set-TargetResource
 
 	if($Ensure -eq "Present")
 	{
-		if($Credentials -eq $null)
-		{
-			if($priority -eq $null)
-			{
+		if($Credentials -eq $null) {
+			if($priority -eq $null) {
 				choco sources add -n"$name" -s"$source"
-			}
-			else
-			{
+			} else {
 				choco sources add -n"$name" -s"$source" --priority=$priority
 			}
-		}
-		else
-		{
+		} else {
 			$username = $Credentials.UserName
 			$password = $Credentials.GetNetworkCredential().Password
 
-			if($priority -eq $null)
-			{
+			if($priority -eq $null) {
 				choco sources add -n"$name" -s"$source" -u="$username" -p="$password"
-			}
-			else
-			{
+			} else {
 				choco sources add -n"$name" -s"$source" -u="$username" -p="$password" --priority=$priority
 			}
 		}
-	}
-	else
-	{
+	} else {
 		choco sources remove -n"$name"
 	}
 }
@@ -134,18 +123,13 @@ function Test-TargetResource
 
     Write-Verbose "Start Test-TargetResource"
 
-	if($env:ChocolateyInstall -eq "" -or $env:ChocolateyInstall -eq $null)
-	{
+	if($env:ChocolateyInstall -eq "" -or $null -eq $env:ChocolateyInstall) {
 		$exe = (get-command choco).Source
-		$chocofolder = $exe.Substring(0,$exe.LastIndexOf("\"))
-
-		if( $chocofolder.EndsWith("bin") )
-		{
+        $chocofolder = $exe.Substring(0,$exe.LastIndexOf("\"))
+        if( $chocofolder.EndsWith("bin") ) {
 			$chocofolder = $chocofolder.Substring(0,$chocofolder.LastIndexOf("\"))
 		}
-	}
-	else
-	{
+	} else {
 		$chocofolder = $env:ChocolateyInstall
 	}
 	$configfolder = "$chocofolder\config"
@@ -154,31 +138,21 @@ function Test-TargetResource
 	$xml = [xml](Get-Content $configfile.FullName)
 	$sources = $xml.chocolatey.sources.source
 
-	foreach($chocosource in $sources)
-	{
-		if($chocosource.id -eq $name -and $ensure -eq 'Present')
-		{
-            if ($chocosource.priority -eq $Priority)
-            {
+	foreach($chocosource in $sources) {
+		if($chocosource.id -eq $name -and $ensure -eq 'Present') {
+            if ($chocosource.priority -eq $Priority) {
                 return $true
-            }
-            else
-            {
+            } else {
                 return $false
             }
-		}
-		elseif($chocosource.id -eq $name -and $ensure -eq 'Absent')
-		{
+		} elseif($chocosource.id -eq $name -and $ensure -eq 'Absent') {
 			return $false
 		}
 	}
 
-	if($Ensure -eq 'Present')
-	{
+	if($Ensure -eq 'Present') {
 		return $false
-	}
-	else
-	{
+	} else {
 		return $true
 	}
 }

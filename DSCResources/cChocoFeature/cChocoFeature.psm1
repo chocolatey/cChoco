@@ -42,7 +42,6 @@ function Get-TargetResource
     }
 
     $returnValue
-
 }
 
 <#
@@ -70,20 +69,15 @@ function Set-TargetResource
 
     Write-Verbose "Starting cChocoFeature Set-TargetResource - Feature Name: $FeatureName, Ensure: $Ensure."
 
-    if ($pscmdlet.ShouldProcess("Choco feature $FeatureName will be ensured $Ensure."))
-    {
-        if ($Ensure -eq 'Present')
-        {
+    if ($pscmdlet.ShouldProcess("Choco feature $FeatureName will be ensured $Ensure.")) {
+        if ($Ensure -eq 'Present') {
             Write-Verbose "Enabling choco feature $FeatureName."
             choco feature enable -n $FeatureName
-        }
-        else 
-        {
+        } else {
             Write-Verbose "Disabling choco feature $FeatureName."
             choco feature disable -n $FeatureName
         }
     }
-
 }
 
 <#
@@ -113,25 +107,21 @@ function Test-TargetResource
     $result = $false
     $feature = Get-ChocoFeature -FeatureName $FeatureName | Where-Object {$_.State -eq "Enabled"}
 
-    if (($Ensure -eq 'Present' -and ([bool]$feature)) -or ($Ensure -eq 'Absent' -and !([bool]$feature)))
-    {
+    if (($Ensure -eq 'Present' -and ([bool]$feature)) -or ($Ensure -eq 'Absent' -and !([bool]$feature))) {
         Write-Verbose "Test-TargetResource is true, $FeatureName is $Ensure."
         $result = $true
-    }
-    else
-    {
+    } else {
         Write-Verbose "Test-TargetResource is false, $FeatureName is not $Ensure."
     }
 
     return $result
-
 }
 
 <#
 .Description
 Query chocolatey features.
 #>
-function Get-ChocoFeature 
+function Get-ChocoFeature
 {
     [OutputType([PSCustomObject])]
     param(

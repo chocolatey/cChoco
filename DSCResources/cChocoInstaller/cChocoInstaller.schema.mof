@@ -2,5 +2,8 @@
 class cChocoInstaller : OMI_BaseResource
 {
 	[Key] string InstallDir;
-	[Write] string ChocoInstallScriptUrl;
+        [Write] string Version;
+        [Write] UInt32 RandomTimeOutBeforeInstallSec;
+        [write,EmbeddedInstance("MSFT_Credential")] String Credentials;
+        [Write] string Source;
 };
