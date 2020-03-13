@@ -1,0 +1,9 @@
+[ClassVersion("1.0.0"), FriendlyName("cChocoInstallerAlt")] 
+class cChocoInstallerAlt : OMI_BaseResource
+{
+	[Key] string InstallDir;
+        [Write] string Version;
+        [Write] UInt32 RandomTimeOutBeforeInstallSec;
+        [write,EmbeddedInstance("MSFT_Credential")] String Credentials;
+        [Write] string Source;
+};

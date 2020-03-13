@@ -22,31 +22,16 @@ function Get-TargetResource
         [ValidateNotNullOrEmpty()]
         [string]
         $InstallDir,
-
-        [parameter(Mandatory = $false)]
-        [ValidateNotNullOrEmpty()]
+        [parameter()]
         [string]
-        $Version,
-
-        [parameter(Mandatory = $false)]
-        [uint32]
-        $RandomTimeOutBeforeInstallSec = 1,
-
-        [parameter(Mandatory = $false)]
-        [pscredential]
-        $Credentials,
-
-        [parameter(Mandatory = $false)]
-        [string]
-        $Source = 'https://chocolatey.org/api/v2'
+        $ChocoInstallScriptUrl = 'https://chocolatey.org/install.ps1'
     )
     Write-Verbose 'Start Get-TargetResource'
 
     #Needs to return a hashtable that returns the current status of the configuration component
     $Configuration = @{
         InstallDir            = $env:ChocolateyInstall
-        Version               = $Version
-        Source                = $Source
+        ChocoInstallScriptUrl = $ChocoInstallScriptUrl
     }
 
     Return $Configuration
@@ -54,7 +39,6 @@ function Get-TargetResource
 
 function Set-TargetResource
 {
-    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSAvoidUsingConvertToSecureStringWithPlainText", "")]
     [CmdletBinding(SupportsShouldProcess)]
     param
     (
@@ -63,29 +47,14 @@ function Set-TargetResource
         [string]
         $InstallDir,
 
-        [parameter(Mandatory = $false)]
-        [ValidateNotNullOrEmpty()]
+        [parameter()]
         [string]
-        $Version,
-
-        [parameter(Mandatory = $false)]
-        [uint32]
-        $RandomTimeOutBeforeInstallSec = 1,
-
-        [parameter(Mandatory = $false)]
-        [pscredential]
-        $Credentials = $(New-Object System.Management.Automation.pscredential ("anonymouse", $(ConvertTo-SecureString " " -AsPlainText -Force))),
-
-        [parameter(Mandatory = $false)]
-        [string]
-        $Source = 'https://chocolatey.org/api/v2'
+        $ChocoInstallScriptUrl = 'https://chocolatey.org/install.ps1'
     )
     Write-Verbose 'Start Set-TargetResource'
-
-    $uri = Get-ChocoPackageUrl -Version $Version -Source $Source -Credentials $Credentials
     $whatIfShouldProcess = $pscmdlet.ShouldProcess('Chocolatey', 'Download and Install')
     if ($whatIfShouldProcess) {
-        Install-Chocolatey -InstallDir $InstallDir -URI $uri -Credentials $Credentials -TimeOut $RandomTimeOutBeforeInstallSec
+        Install-Chocolatey @PSBoundParameters
     }
 }
 
@@ -98,89 +67,27 @@ function Test-TargetResource
         [ValidateNotNullOrEmpty()]
         [string]
         $InstallDir,
-
-        [parameter(Mandatory = $false)]
-        [ValidateNotNullOrEmpty()]
+        [parameter()]
         [string]
-        $Version,
-
-        [parameter(Mandatory = $false)]
-        [uint32]
-        $RandomTimeOutBeforeInstallSec = 1,
-
-        [parameter(Mandatory = $false)]
-        [pscredential]
-        $Credentials,
-
-        [parameter(Mandatory = $false)]
-        [string]
-        $Source = 'https://chocolatey.org/api/v2'
+        $ChocoInstallScriptUrl = 'https://chocolatey.org/install.ps1'
     )
 
     Write-Verbose 'Test-TargetResource'
-    if (-not (Test-ChocoInstalled)) {
+    if (-not (Test-ChocoInstalled))
+    {
         Write-Verbose 'Choco is not installed, calling set'
         Return $false
     }
 
     ##Test to see if the Install Directory is correct.
     $env:ChocolateyInstall = [Environment]::GetEnvironmentVariable('ChocolateyInstall','Machine')
-    if(-not ($InstallDir -eq $env:ChocolateyInstall)) {
+    if(-not ($InstallDir -eq $env:ChocolateyInstall))
+    {
         Write-Verbose "Choco should be installed in $InstallDir but is installed to $env:ChocolateyInstall calling set"
         Return $false
     }
 
     Return $true
-}
-
-# Custom functions
-function Join-Uri
-{
-    Param (
-        [string[]] $Parts,
-        [string] $Seperator = '/'
-    )
-    $search = '(?<!:)' + [regex]::Escape($Seperator) + '+'  #Replace multiples except in front of a colon for URLs.
-    $replace = $Seperator
-    Return $($($Parts | Where-Object {$_ -and $_.Trim().Length}) -join $Seperator -replace $search, $replace)
-}
-
-function Get-ChocoPackageUrl
-{
-    Param (
-        [string] $Version,
-        [pscredential] $Credentials,
-
-        [parameter(Mandatory = $true)]
-        [string] $Source
-    )
-
-    Write-Verbose 'Get-ChocoLatestVersionUrl'
-    [System.Net.ServicePointManager]::SecurityProtocol = 3072 -bor 768 -bor 192 -bor 48
-    if ($Version) {
-        $query = "Packages(Id='chocolatey',Version='$Version')"
-        $url = Join-Uri -Parts @($Source, $query) -Seperator '/'
-        Write-Verbose "Invoke-WebRequest $url"
-        if ($Credentials) {
-            $res = Invoke-WebRequest -URI $url -Credential $Credentials -UseBasicParsing
-        } else {
-            $res = Invoke-WebRequest -URI $url -UseBasicParsing
-        }
-        Write-Verbose "URL $($([xml]$res).feed.entry.content.src)"
-        return $([xml]$res.Content).entry.content.src
-    }
-    else {
-        $query = 'Packages()?$filter=((Id%20eq%20%27chocolatey%27)%20and%20(not%20IsPrerelease))%20and%20IsLatestVersion'
-        $url = Join-Uri -Parts @($Source, $query) -Seperator '/'
-        Write-Verbose "Invoke-WebRequest $url"
-        if ($Credentials) {
-            $res = Invoke-WebRequest -URI $url -Credential $Credentials -UseBasicParsing
-        } else {
-            $res = Invoke-WebRequest -URI $url -UseBasicParsing
-        }
-        Write-Verbose "URL $($([xml]$res).feed.entry.content.src)"
-        return $([xml]$res.Content).feed.entry.content.src
-    }
 }
 
 function Test-ChocoInstalled
@@ -189,7 +96,8 @@ function Test-ChocoInstalled
     $env:Path = [Environment]::GetEnvironmentVariable('Path','Machine')
 
     Write-Verbose "Env:Path contains: $env:Path"
-    if (Test-Command -command choco) {
+    if (Test-Command -command choco)
+    {
         Write-Verbose 'YES - Choco is Installed'
         return $true
     }
@@ -216,21 +124,43 @@ Function Test-Command
 #region - chocolately installer work arounds. Main issue is use of write-host
 function global:Write-Host
 {
-    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSAvoidGlobalFunctions")]
     Param(
         [Parameter(Mandatory,Position = 0)]
         $Object,
-        [switch]
+        [Switch]
         $NoNewLine,
-        [consolecolor]
+        [ConsoleColor]
         $ForegroundColor,
-        [consolecolor]
+        [ConsoleColor]
         $BackgroundColor
     )
     #Redirecting Write-Host -> Write-Verbose.
     Write-Verbose $Object
 }
 #endregion
+
+function Get-FileDownload {
+    param (
+        [parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
+        [string]$url,
+
+        [parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
+        [string]$file
+    )
+    # Set security protocol preference to avoid the download error if the machine has disabled TLS 1.0 and SSLv3
+    # See: https://chocolatey.org/install (Installing With Restricted TLS section)
+    # Since cChoco requires at least PowerShell 4.0, we have .NET 4.5 available, so we can use [System.Net.SecurityProtocolType] enum values by name.
+    $securityProtocolSettingsOriginal = [System.Net.ServicePointManager]::SecurityProtocol
+    [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12 -bor [System.Net.SecurityProtocolType]::Tls11 -bor [System.Net.SecurityProtocolType]::Tls -bor [System.Net.SecurityProtocolType]::Ssl3
+
+    Write-Verbose "Downloading $url to $file"
+    $downloader = new-object -TypeName System.Net.WebClient
+    $downloader.DownloadFile($url, $file)
+
+    [System.Net.ServicePointManager]::SecurityProtocol = $securityProtocolSettingsOriginal
+}
 
 Function Install-Chocolatey {
     [CmdletBinding()]
@@ -241,18 +171,9 @@ Function Install-Chocolatey {
         [string]
         $InstallDir,
 
-        [parameter(Mandatory = $true)]
-        [ValidateNotNullOrEmpty()]
+        [parameter()]
         [string]
-        $URI,
-
-        [parameter(Mandatory = $true)]
-        [pscredential]
-        $Credentials,
-
-        [parameter(Mandatory = $false)]
-        [uint32]
-        $TimeOut = 1
+        $ChocoInstallScriptUrl = 'https://chocolatey.org/install.ps1'
     )
     Write-Verbose 'Install-Chocolatey'
 
@@ -268,58 +189,10 @@ Function Install-Chocolatey {
     $env:ChocolateyInstall = [Environment]::GetEnvironmentVariable('ChocolateyInstall','Machine')
     Write-Verbose "Env:ChocolateyInstall has $env:ChocolateyInstall"
 
-    #Download and install package
-    Write-Verbose 'Create Temp Directory'
-    if ($null -eq $env:TEMP) {
-        $env:TEMP = Join-Path $env:SystemDrive 'temp'
-    }
-    $chocTempDir = Join-Path $env:TEMP "chocolatey"
-    $tempDir = Join-Path $chocTempDir "chocInstall"
-    if (-not $(Test-Path -LiteralPath $tempDir -PathType Container)) {
-        New-Item -ItemType "directory" -Path $tempDir
-    }
-    $file = Join-Path $tempDir "chocolatey.zip"
-
-    [System.Net.ServicePointManager]::SecurityProtocol = 3072 -bor 768 -bor 192 -bor 48
-
-    $sleep = $(Get-Random -Maximum $TimeOut -Minimum 0)
-    Write-Verbose "Pause before download: $sleep sec"
-    Start-Sleep -Seconds $sleep
-    Write-Verbose 'Download choco package'
-    Invoke-WebRequest -URI $URI -Credential $Credentials -OutFile $file -UseBasicParsing
-
-    Write-Verbose 'Unzip package'
-    Expand-Archive -Path "$file" -DestinationPath "$tempDir" -Force
-
-    Write-Output "Installing chocolatey on this machine"
-    $toolsFolder = Join-Path $tempDir "tools"
-    $chocInstallPS1 = Join-Path $toolsFolder "chocolateyInstall.ps1"
-
-    & $chocInstallPS1
-
-    Write-Output 'Ensuring chocolatey commands are on the path'
-    $chocoPath = $env:ChocolateyInstall
-    if ($null -eq $chocoPath -or $chocoPath -eq '') {
-      $chocoPath = "$env:ALLUSERSPROFILE\Chocolatey"
-    }
-
-    if (!(Test-Path ($chocoPath))) {
-      $chocoPath = "$env:SYSTEMDRIVE\ProgramData\Chocolatey"
-    }
-
-    $chocoExePath = Join-Path $chocoPath 'bin'
-
-    if ($($env:Path).ToLower().Contains($($chocoExePath).ToLower()) -eq $false) {
-      $env:Path = [Environment]::GetEnvironmentVariable('Path',[System.EnvironmentVariableTarget]::Machine);
-    }
-
-    Write-Output 'Ensuring chocolatey.nupkg is in the lib folder'
-    $chocoPkgDir = Join-Path $chocoPath 'lib\chocolatey'
-    $nupkg = Join-Path $chocoPkgDir 'chocolatey.nupkg'
-    if (-not $(Test-Path -LiteralPath $chocoPkgDir -PathType Container)) {
-        New-Item -ItemType "directory" -Path $chocoPkgDir
-    }
-    Copy-Item "$file" "$nupkg" -Force -ErrorAction SilentlyContinue
+    #Download an execute install script
+    $file = Join-Path -Path $InstallDir -ChildPath 'install.ps1'
+    Get-FileDownload -url $ChocoInstallScriptUrl -file $file
+    . $file
 
     #refresh after install
     Write-Verbose 'Adding Choco to path'
