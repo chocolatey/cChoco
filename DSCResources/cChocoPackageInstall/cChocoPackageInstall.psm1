@@ -82,7 +82,7 @@ function Set-TargetResource
         [bool]
         $AutoUpgrade = $false,
         [bool]
-        $UpgradeLowerVersions = $false
+        $UpgradeLowerVersion = $false
     )
     Write-Verbose -Message 'Start Set-TargetResource'
     $isVersionPresent = $PSBoundParameters.ContainsKey('Version')
@@ -123,12 +123,15 @@ function Set-TargetResource
                     $installedPackages = @(Get-ChocoInstalledPackage | Where-object { $_.Name -eq $Name })
                     $packageCount = $installedPackages.Count
                     Write-Verbose "Found $packageCount matching package(s) for upgrade"
-                    $canUpgrade = $packageCount -eq 1 
+                    $canUpgrade = $packageCount -eq 1
                     if ($canUpgrade) {
-                        [version] $installedVersion = $installedPackages[0].Version
-                        $canUpgrade = $installedVersion.CompareTo([version]$Version) -le 0
+                        [Version] $installedVersion = Get-VersionCore -Version $installedPackages[0].Version
+                        [Version] $targetVersion = Get-VersionCore -Version $Version
+
+                        $canUpgrade = $installedVersion.CompareTo($targetVersion) -le 0
                     }
-                    if ($UpgradeLowerVersions -and $canUpgrade) {
+
+                    if ($UpgradeLowerVersion -and $canUpgrade) {
                         Write-Verbose -Message "Upgrading $Name to version $Version"
                         Upgrade-Package -pName $Name -pParams $Params -pVersion $Version
                     }
@@ -188,7 +191,7 @@ function Test-TargetResource
         [bool]
         $AutoUpgrade = $false,
         [bool]
-        $UpgradeLowerVersions = $false
+        $UpgradeLowerVersion = $false
     )
 
     Write-Verbose -Message 'Start Test-TargetResource'
@@ -471,11 +474,11 @@ function Upgrade-Package {
         [Parameter(Position=1)]
         [string]$pParams,
         [Parameter(Position=2)]
-        [string]$pVersion,
-        [Parameter(Position=3)]
         [string]$pSource,
+        [Parameter(Position=3)]
+        [string]$cParams,
         [Parameter(Position=4)]
-        [string]$cParams
+        [string]$pVersion
     )
 
     $env:Path = [Environment]::GetEnvironmentVariable('Path','Machine')
@@ -572,6 +575,20 @@ function Get-ChocoVersion {
         }
     }
     Return $res
+}
+
+function Get-VersionCore {
+    [CmdletBinding()]
+    param (
+        [string]$Version
+    )
+
+    [Version] $versionCore = $null
+    if ($Version -match '(?<Major>[1-9]\d*)(\.(?<Minor>[0-9]*))?(\.(?<Patch>[0-9]*))?(\.(?<Segment>[0-9]*))?([-+].*)?') {
+        $versionCore = New-Object System.Version($Matches.Major, $Matches.Minor, $Matches.Patch, $Matches.Segment)
+    }
+
+    $versionCore
 }
 
 Export-ModuleMember -Function *-TargetResource
