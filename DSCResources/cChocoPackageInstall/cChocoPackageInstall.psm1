@@ -367,9 +367,12 @@ function IsPackageInstalled
         if ($pre) {
             throw "MinimumVersion does not support comparing pre-releases, please use Version parameter instead"
         }
+
         $comparablePackages = $installedPackages | Where-Object { $_.Name -eq $pName} | ForEach-Object {
-            # ignoring pre-release as per above comment
-            $v = [System.Version](($_.Version -split "-")[0])
+            # as mentioned above we cant convert prerelease versions to [Sytem.Version] so we ignore anything after "-"
+            # leaving just the . seperated numeric version. this is loosely equivalent to "rounding down"
+            $parseableVersion = ($_.Version -split "-")[0]
+            $v = [System.Version]($parseableVersion)
             $_ | Add-Member -MemberType NoteProperty -Name ComparableVersion -Value $v -PassThru
         }
         $installedPackages = $comparablePackages | Where-Object {$_.ComparableVersion -ge $pMinimumVersion}

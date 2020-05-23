@@ -160,6 +160,35 @@ Describe -Name "Testing $ResourceName loaded from $ResourceFile" -Fixture {
             Test-TargetResource @Scenario6 | Should Be $false
         }
     }
+
+    Context -Name "Package is installed with prerelease version 1.0.0-1" -Fixture {
+        Mock -CommandName 'Get-ChocoInstalledPackage' -ModuleName 'cChocoPackageInstall' -MockWith {
+            return [pscustomobject]@{
+                'Name'    = 'GoogleChrome'
+                'Version' = '1.0.0-1'
+            }
+        }
+
+        $Scenario1 = @{
+            Name    = 'GoogleChrome'
+            Ensure  = 'Present'
+            MinimumVersion = '0.9.0'
+        }
+
+        It -name "Test-TargetResource -ensure 'Present' -MinimumVersion '0.9.0' should return True" -test {
+            Test-TargetResource @Scenario1 | Should Be $true
+        }
+
+        $Scenario2 = @{
+            Name    = 'GoogleChrome'
+            Ensure  = 'Present'
+            MinimumVersion = '1.0.1'
+        }
+
+        It -name "Test-TargetResource -ensure 'Present' -MinimumVersion '1.0.1' should return False" -test {
+            Test-TargetResource @Scenario2 | Should Be $false
+        }
+    }
 }
 
 #Clean-up
