@@ -274,6 +274,101 @@ function global:Write-Host
     #Override default Write-Host...
     Write-Verbose -Message $Object
 }
+function UninstallPackage
+{
+    [Diagnostics.CodeAnalysis.SuppressMessage('PSAvoidUsingInvokeExpression','')]
+    param(
+        [Parameter(Position=0,Mandatory)]
+        [string]$pName,
+        [Parameter(Position=1)]
+        [string]$pParams
+    )
+
+    $env:Path = [Environment]::GetEnvironmentVariable('Path','Machine')
+
+    [string]$chocoParams = "-y"
+    if ($pParams) {
+        $chocoParams += " --params=`"$pParams`""
+    }
+    if ($pVersion) {
+        $chocoParams += " --version=`"$pVersion`""
+    }
+    # Check if Chocolatey version is Greater than 0.10.4, and add --no-progress 
+    if ((Get-ChocoVersion) -ge [System.Version]('0.10.4')){
+        $chocoParams += " --no-progress"
+    }
+
+    $cmd = "choco uninstall $pName $chocoParams"
+    Write-Verbose -Message "Uninstalling $pName with: '$cmd'"
+    $packageUninstallOuput = Invoke-Expression -Command $cmd
+
+    Write-Verbose -Message "Package uninstall output $packageUninstallOuput "
+
+    # Clear Package Cache
+    Get-ChocoInstalledPackage -Purge
+
+    #refresh path varaible in powershell, as choco doesn"t, to pull in git
+    $env:Path = [Environment]::GetEnvironmentVariable('Path','Machine')
+}
+
+function IsPackageInstalled
+{
+    param(
+        [Parameter(Position=0,Mandatory)][string]$pName,
+        [Parameter(Position=1)][string]$pVersion
+    )
+    Write-Verbose -Message "Start IsPackageInstalled $pName"
+
+    $env:Path = [Environment]::GetEnvironmentVariable('Path','Machine')
+    Write-Verbose -Message "Path variables: $env:Path"
+
+    $installedPackages = Get-ChocoInstalledPackage
+
+    if ($pVersion) {
+        Write-Verbose 'Comparing version'
+        $installedPackages = $installedPackages | Where-object { $_.Name -eq $pName -and $_.Version -eq $pVersion}
+    } else {
+        Write-Verbose "Finding packages -eq $pName"
+        $installedPackages = $installedPackages | Where-object { $_.Name -eq $pName}
+    }
+
+    $count = @($installedPackages).Count
+    Write-Verbose "Found $Count matching packages"
+    if ($Count -gt 0)
+    {
+        $installedPackages | ForEach-Object {Write-Verbose -Message "Found: $($_.Name) with version $($_.Version)"}
+        return $true
+    }
+
+    return $false
+}
+
+Function Test-LatestVersionInstalled {
+    [Diagnostics.CodeAnalysis.SuppressMessage('PSAvoidUsingInvokeExpression','')]
+    param(
+        [Parameter(Mandatory)]
+        [string]$pName,
+        [string]$pSource
+    )
+    Write-Verbose -Message "Testing if $pName can be upgraded"
+
+    [string]$chocoParams = '--noop'
+    if ($pSource) {
+        $chocoParams += " --source=`"$pSource`""
+    }
+
+    $cmd = "upgrade $pName $chocoParams"
+    Write-Verbose -Message "Testing if $pName can be upgraded: choco '$cmd'"
+
+    $packageUpgradeOuput = Invoke-ChocoLatey $cmd
+    $packageUpgradeOuput | ForEach-Object {Write-Verbose -Message $_}
+
+    if ($packageUpgradeOuput -match "$pName.*is the latest version available based on your source") {
+        return $true
+    }
+    return $false
+}
+
 
 Function Upgrade-Package {
     [Diagnostics.CodeAnalysis.SuppressMessage('PSUseApprovedVerbs','')]
