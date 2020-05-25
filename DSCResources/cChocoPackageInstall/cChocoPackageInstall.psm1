@@ -104,6 +104,7 @@ function Set-TargetResource
                     InstallPackage -pName $Name -arguments $Params -pVersion $Version -pSource $Source -cParams $chocoParams
                 }
             }
+        }
     }
 }
 
@@ -172,6 +173,7 @@ function Test-TargetResource
 
     Return $result
 }
+
 function Test-ChocoInstalled
 {
     Write-Verbose -Message 'Test-ChocoInstalled'
@@ -406,9 +408,6 @@ function Invoke-Chocolatey
         throw "Error: chocolatey command failed with exit code $exitcode.`n$output" 
     }       
 }
-
-
-
 
 function Get-ChocoVersion {
     [CmdletBinding()]
