@@ -105,6 +105,11 @@ function Set-TargetResource
                 }
             }
         }
+    }else{
+        $whatIfShouldProcess = $pscmdlet.ShouldProcess("$Name", 'Install package from Chocolatey')
+        if ($whatIfShouldProcess) {
+            InstallPackage -pName $Name -pParams $Params -pVersion $Version -pSource $Source -cParams $chocoParams
+        }
     }
 }
 
@@ -465,11 +470,11 @@ function Invoke-Chocolatey
         [string]$arguments
     )
     [int[]]$validExitCodes =  $(
-                0,    #most widely used success exit code
-                1605, #(MSI uninstall) - the product is not found, could have already been uninstalled
-                1614, #(MSI uninstall) - the product is uninstalled
-                1641, #(MSI) - restart initiated
-                3010  #(MSI, InnoSetup can be passed to provide this) - restart required
+                0    #most widely used success exit code
+                #1605, #(MSI uninstall) - the product is not found, could have already been uninstalled
+                #1614, #(MSI uninstall) - the product is uninstalled
+                #1641, #(MSI) - restart initiated
+                #3010  #(MSI, InnoSetup can be passed to provide this) - restart required
             )
     Write-Verbose -Message "command: 'choco $arguments'" 
     
