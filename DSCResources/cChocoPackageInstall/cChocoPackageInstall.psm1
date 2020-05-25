@@ -510,7 +510,7 @@ function Invoke-Chocolatey
 }
 
 function Get-ChocoVersion {
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess)]
     param (
         [switch]$Purge,
         [switch]$NoCache
