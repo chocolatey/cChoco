@@ -1,5 +1,4 @@
-# Copyright (c) 2017 Chocolatey Software, Inc.
-# Copyright (c) 2013 - 2017 Lawrence Gripper & original authors/contributors from https://github.com/chocolatey/cChoco
+﻿# Copyright (c) 2013 - 2017 Lawrence Gripper & original authors/contributors from https://github.com/chocolatey/cChoco
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -90,23 +89,23 @@ function Set-TargetResource
             $whatIfShouldProcess = $pscmdlet.ShouldProcess("$Name", 'Remove Chocolatey package')
             if ($whatIfShouldProcess) {
                 Write-Verbose -Message "Removing $Name as ensure is set to absent"
-                UninstallPackage -pName $Name -pParams $Params
+                UninstallPackage -pName $Name -arguments $Params
             }
         } else {
             $whatIfShouldProcess = $pscmdlet.ShouldProcess("$Name", 'Installing / upgrading package from Chocolatey')
             if ($whatIfShouldProcess) {
                 if ($Version) {
                     Write-Verbose -Message "Uninstalling $Name due to version mis-match"
-                    UninstallPackage -pName $Name -pParams $Params
+                    UninstallPackage -pName $Name -arguments $Params
                     Write-Verbose -Message "Re-Installing $Name with correct version $version"
-                    InstallPackage -pName $Name -pParams $Params -pVersion $Version -pSource $Source -cParams $chocoParams
+                    InstallPackage -pName $Name -arguments $Params -pVersion $Version -pSource $Source -cParams $chocoParams
                 } elseif ($AutoUpgrade) {
                     Write-Verbose -Message "Upgrading $Name due to version mis-match"
-                    Upgrade-Package -pName $Name -pParams $Params -pSource $Source -cParams $chocoParams
+                    InstallPackage -pName $Name -arguments $Params -pVersion $Version -pSource $Source -cParams $chocoParams
                 }
             }
         }
-    } else {
+    }else{
         $whatIfShouldProcess = $pscmdlet.ShouldProcess("$Name", 'Install package from Chocolatey')
         if ($whatIfShouldProcess) {
             InstallPackage -pName $Name -pParams $Params -pVersion $Version -pSource $Source -cParams $chocoParams
@@ -179,6 +178,7 @@ function Test-TargetResource
 
     Return $result
 }
+
 function Test-ChocoInstalled
 {
     Write-Verbose -Message 'Test-ChocoInstalled'
@@ -197,7 +197,7 @@ function Test-ChocoInstalled
 
 Function Test-Command
 {
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess)]
     [OutputType([bool])]
     Param (
         [string]$command = 'choco'
@@ -247,19 +247,38 @@ function InstallPackage
     if ((Get-ChocoVersion) -ge [System.Version]('0.10.4')){
         $chocoParams += " --no-progress"
     }
-
-    $cmd = "choco install $pName $chocoParams"
-    Write-Verbose -Message "Install command: '$cmd'"
-    $packageInstallOuput = Invoke-Expression -Command $cmd
-    Write-Verbose -Message "Package output $packageInstallOuput"
-
+    Write-Verbose -Message "Install command: 'choco install $pName $chocoParams'"
+    $packageInstallOuput = Invoke-Chocolatey "install $pName $chocoParams"
+    Write-Verbose -Message "Package output $packageInstallOuput "
     # Clear Package Cache
-    Get-ChocoInstalledPackage -Purge
+    Get-ChocoInstalledPackage 'Purge'
 
     #refresh path varaible in powershell, as choco doesn"t, to pull in git
     $env:Path = [Environment]::GetEnvironmentVariable('Path','Machine')
 }
 
+
+##region - chocolately installer work arounds. Main issue is use of write-host
+##attempting to work around the issues with Chocolatey calling Write-host in its scripts.
+function global:Write-Host
+{
+    [Diagnostics.CodeAnalysis.SuppressMessage('PSAvoidGlobalFunctions','')]
+    Param(
+        [Parameter(Mandatory, Position = 0)]
+        [Object]
+        $Object,
+        [Switch]
+        $NoNewLine,
+        [ConsoleColor]
+        $ForegroundColor,
+        [ConsoleColor]
+        $BackgroundColor
+
+    )
+
+    #Override default Write-Host...
+    Write-Verbose -Message $Object
+}
 function UninstallPackage
 {
     [Diagnostics.CodeAnalysis.SuppressMessage('PSAvoidUsingInvokeExpression','')]
@@ -343,10 +362,10 @@ Function Test-LatestVersionInstalled {
         $chocoParams += " --source=`"$pSource`""
     }
 
-    $cmd = "choco upgrade $pName $chocoParams"
-    Write-Verbose -Message "Testing if $pName can be upgraded: '$cmd'"
+    $cmd = "upgrade $pName $chocoParams"
+    Write-Verbose -Message "Testing if $pName can be upgraded: choco '$cmd'"
 
-    $packageUpgradeOuput = Invoke-Expression -Command $cmd
+    $packageUpgradeOuput = Invoke-ChocoLatey $cmd
     $packageUpgradeOuput | ForEach-Object {Write-Verbose -Message $_}
 
     if ($packageUpgradeOuput -match "$pName.*is the latest version available based on your source") {
@@ -355,26 +374,6 @@ Function Test-LatestVersionInstalled {
     return $false
 }
 
-##region - chocolately installer work arounds. Main issue is use of write-host
-##attempting to work around the issues with Chocolatey calling Write-host in its scripts.
-function global:Write-Host
-{
-    Param(
-        [Parameter(Mandatory, Position = 0)]
-        [Object]
-        $Object,
-        [Switch]
-        $NoNewLine,
-        [ConsoleColor]
-        $ForegroundColor,
-        [ConsoleColor]
-        $BackgroundColor
-
-    )
-
-    #Override default Write-Host...
-    Write-Verbose -Message $Object
-}
 
 Function Upgrade-Package {
     [Diagnostics.CodeAnalysis.SuppressMessage('PSUseApprovedVerbs','')]
@@ -408,7 +407,8 @@ Function Upgrade-Package {
         $chocoParams += " --no-progress"
     }
 
-    $cmd = "choco upgrade $pName $chocoParams"
+    $cmd = "upgrade $pName $chocoParams"
+
     Write-Verbose -Message "Upgrade command: '$cmd'"
 
     if (-not (IsPackageInstalled -pName $pName))
@@ -416,11 +416,8 @@ Function Upgrade-Package {
         throw "$pName is not installed, you cannot upgrade"
     }
 
-    $packageUpgradeOuput = Invoke-Expression -Command $cmd
+    $packageUpgradeOuput = Invoke-Chocolatey $cmd
     $packageUpgradeOuput | ForEach-Object { Write-Verbose -Message $_ }
-
-    # Clear Package Cache
-    Get-ChocoInstalledPackage -Purge
 }
 
 function Get-ChocoInstalledPackage {
@@ -450,8 +447,66 @@ function Get-ChocoInstalledPackage {
             }
         }
     }
-
     Return $res
+}
+
+<#
+.Synopsis
+   Run chocolatey executable and throws error on failure
+.DESCRIPTION
+   Run chocolatey executable and throws error on failure
+.EXAMPLE
+   Invoke-Chocolatey "list -lo"
+.EXAMPLE
+   Invoke-Chocolatey -arguments "list -lo"
+#>
+function Invoke-Chocolatey
+{
+    [CmdletBinding()]
+    Param
+    (
+        # chocolatey arguments."
+        [Parameter(Position=0)]
+        [string]$arguments
+    )
+    [int[]]$validExitCodes =  $(
+                0    #most widely used success exit code
+                #1605, #(MSI uninstall) - the product is not found, could have already been uninstalled
+                #1614, #(MSI uninstall) - the product is uninstalled
+                #1641, #(MSI) - restart initiated
+                #3010  #(MSI, InnoSetup can be passed to provide this) - restart required
+            )
+    Write-Verbose -Message "command: 'choco $arguments'" 
+    
+    $pinfo = New-Object System.Diagnostics.ProcessStartInfo
+    $pinfo.FileName = "choco"
+    $pinfo.RedirectStandardError = $true
+    $pinfo.RedirectStandardOutput = $true
+    $pinfo.UseShellExecute = $false
+    $pinfo.Arguments = "$arguments"
+
+    $p = New-Object System.Diagnostics.Process
+    $p.StartInfo = $pinfo
+    $p.Start() | Out-Null
+
+    $output = $p.StandardOutput.ReadToEnd()
+    $p.WaitForExit()
+    $exitcode = $p.ExitCode
+    $p.Dispose()
+
+    #Set $LASTEXITCODE variable.
+    powershell.exe   -NoLogo -NoProfile -Noninteractive "exit $exitcode"
+
+    if($exitcode -in $validExitCodes )
+    {
+        $output.Split("`n")
+        $outputdata
+    }
+    else
+    { 
+        #when error, throw output as error, contains errormessage
+        throw "Error: chocolatey command failed with exit code $exitcode.`n$output" 
+    }       
 }
 
 function Get-ChocoVersion {

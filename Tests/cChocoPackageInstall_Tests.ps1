@@ -122,6 +122,18 @@ Describe -Name "Testing $ResourceName loaded from $ResourceFile" -Fixture {
             Test-TargetResource @Scenario4 | Should Be $False
         }
     }
+
+    Context -Name "Package cannot be found" -Fixture {
+        
+        $Scenario1 = @{
+            Name = 'NonExistendPackage'
+            Ensure = 'Present'
+        }
+        It -name "Set-TargeResource -ensure 'present' should throw" -test {
+            { Set-TargetResource @Scenario1 } | Should throw
+        }
+    
+    }
 }
 
 #Clean-up

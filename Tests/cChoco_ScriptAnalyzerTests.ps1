@@ -29,6 +29,7 @@ if ($Modules.count -gt 0) {
     foreach ($module in $modules) {
       Context “Testing Module '$($module.FullName)'” {
         foreach ($rule in $rules) {
+         Invoke-ScriptAnalyzer -Path $module.FullName -IncludeRule $rule.RuleName | fl
           It “passes the PSScriptAnalyzer Rule $rule“ {
             (Invoke-ScriptAnalyzer -Path $module.FullName -IncludeRule $rule.RuleName ).Count | Should Be 0
           }
