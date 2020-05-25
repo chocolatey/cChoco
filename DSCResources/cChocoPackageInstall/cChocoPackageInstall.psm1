@@ -115,7 +115,7 @@ function Set-TargetResource
 
 function Test-TargetResource
 {
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess)]
     [OutputType([bool])]
     param
     (
@@ -197,7 +197,7 @@ function Test-ChocoInstalled
 
 Function Test-Command
 {
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess)]
     [OutputType([bool])]
     Param (
         [string]$command = 'choco'
