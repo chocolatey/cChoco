@@ -115,6 +115,7 @@ function Set-TargetResource
 
 function Test-TargetResource
 {
+    [CmdletBinding(SupportsShouldProcess)]
     [OutputType([bool])]
     param
     (
@@ -461,7 +462,7 @@ function Get-ChocoInstalledPackage {
 #>
 function Invoke-Chocolatey
 {
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess)]
     Param
     (
         # chocolatey arguments."
