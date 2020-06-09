@@ -80,9 +80,7 @@ function Set-TargetResource
         [String]
         $chocoParams,
         [bool]
-        $AutoUpgrade = $false,
-        [bool]
-        $UpgradeLowerVersion = $false
+        $AutoUpgrade = $false
     )
     Write-Verbose -Message 'Start Set-TargetResource'
     $isVersionPresent = $PSBoundParameters.ContainsKey('Version')
@@ -131,7 +129,7 @@ function Set-TargetResource
                         $canUpgrade = $installedVersion.CompareTo($targetVersion) -le 0
                     }
 
-                    if ($UpgradeLowerVersion -and $canUpgrade) {
+                    if ($canUpgrade) {
                         Write-Verbose -Message "Upgrading $Name to version $Version"
                         Upgrade-Package -pName $Name -pParams $Params -pVersion $Version
                     }
@@ -189,9 +187,7 @@ function Test-TargetResource
         [String]
         $chocoParams,
         [bool]
-        $AutoUpgrade = $false,
-        [bool]
-        $UpgradeLowerVersion = $false
+        $AutoUpgrade = $false
     )
 
     Write-Verbose -Message 'Start Test-TargetResource'
