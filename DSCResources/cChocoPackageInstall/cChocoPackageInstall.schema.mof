@@ -5,6 +5,7 @@ class cChocoPackageInstall : OMI_BaseResource
   [Write,ValueMap{"Present", "Absent"},Values{"Present", "Absent"}] String Ensure;
   [write] string Params;
   [write] string Version;
+  [write] string MinimumVersion;
   [write] string Source;
   [Write] String chocoParams;
   [Write] Boolean AutoUpgrade;
