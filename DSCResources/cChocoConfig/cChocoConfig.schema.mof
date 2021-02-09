@@ -1,0 +1,9 @@
+
+[ClassVersion("1.0.0.0"), FriendlyName("cChocoConfig")]
+class cChocoConfig : OMI_BaseResource
+{
+    [Key] String ConfigName;
+    [Write,ValueMap{"Present", "Absent"},Values{"Present", "Absent"}] String Ensure;
+    [Write] String Value;
+};
+
