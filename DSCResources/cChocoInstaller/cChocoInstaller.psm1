@@ -190,7 +190,9 @@ Function Install-Chocolatey {
     Write-Verbose "Env:ChocolateyInstall has $env:ChocolateyInstall"
 
     #Download an execute install script
-    $file = Join-Path -Path $InstallDir -ChildPath 'install.ps1'
+    $tempPath = Join-Path -Path $env:TEMP -ChildPath ([GUID]::NewGuid().ToString())
+    New-Item -Path $tempPath -ItemType Directory | Out-Null
+    $file = Join-Path -Path $tempPath -ChildPath 'install.ps1'
     Get-FileDownload -url $ChocoInstallScriptUrl -file $file
     . $file
 
