@@ -55,4 +55,4 @@ To build:
 
 ### WS-Management - Exceeds the maximum envelope size allowed
 
-The maximum envelope size for WinRM is not sufficient for installing large packages. To increase the envelope size use `winrm set winrm/config @{MaxEnvelopeSizekb=”153600″}` - this exampe will increase it to 150MB.
+The maximum envelope size for WinRM is not sufficient for installing large packages. To increase the envelope size use `winrm set winrm/config @{MaxEnvelopeSizekb=”153600″}` - this example will increase it to 150MB.
