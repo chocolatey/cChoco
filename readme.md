@@ -47,9 +47,9 @@ To build:
 
 1. Update `ModuleVersion` in `cChoco.psd1` - use `major.minor.patch.0`;
 2. Update `version` in `appveyor.yml` - use `major.minor.patch.{build}`;
-3. Merge development branch to master - `git checkout master`, `git merge development`;
+3. Merge development branch to master - `git checkout master`, `git merge development`, `git push origin`;
 4. Tag master with new version - `git tag v<major.minor.patch>`;
-5. Push changes with tag `git push v<major.minor.patch>`
+5. Push changes with tag `git push origin v<major.minor.patch>`
 
 ## Known Issues / Troubleshooting
 
