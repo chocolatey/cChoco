@@ -31,7 +31,6 @@ function Get-TargetResource
         [ValidateNotNull()]
         [string]
         $MinimumVersion,
-        [ValidateNotNullOrEmpty()]
         [string]
         $Source
     )
@@ -283,7 +282,7 @@ function InstallPackage
     if ($cParams) {
         $chocoParams += " $cParams"
     }
-    # Check if Chocolatey version is Greater than 0.10.4, and add --no-progress 
+    # Check if Chocolatey version is Greater than 0.10.4, and add --no-progress
     if ((Get-ChocoVersion) -ge [System.Version]('0.10.4')){
         $chocoParams += " --no-progress"
     }
@@ -319,7 +318,7 @@ function UninstallPackage
     if ($pVersion) {
         $chocoParams += " --version=`"$pVersion`""
     }
-    # Check if Chocolatey version is Greater than 0.10.4, and add --no-progress 
+    # Check if Chocolatey version is Greater than 0.10.4, and add --no-progress
     if ((Get-ChocoVersion) -ge [System.Version]('0.10.4')){
         $chocoParams += " --no-progress"
     }
@@ -344,10 +343,10 @@ function IsPackageInstalled
     param(
         [Parameter(Position=0, Mandatory)]
         [string]$pName,
-        
+
         [Parameter(ParameterSetName = 'RequiredVersion')]
         [string]$pVersion,
-        
+
         [Parameter(ParameterSetName = 'MinimumVersion')]
         [string]$pMinimumVersion
     )
@@ -470,7 +469,7 @@ Function Upgrade-Package {
     if ($cParams) {
         $chocoParams += " $cParams"
     }
-    # Check if Chocolatey version is Greater than 0.10.4, and add --no-progress 
+    # Check if Chocolatey version is Greater than 0.10.4, and add --no-progress
     if ((Get-ChocoVersion) -ge [System.Version]('0.10.4')){
         $chocoParams += " --no-progress"
     }
