@@ -117,10 +117,28 @@ function Set-TargetResource
             $whatIfShouldProcess = $pscmdlet.ShouldProcess("$Name", 'Installing / upgrading package from Chocolatey')
             if ($whatIfShouldProcess) {
                 if ($Version) {
-                    Write-Verbose -Message "Uninstalling $Name due to version mis-match"
-                    UninstallPackage -pName $Name -pParams $Params
-                    Write-Verbose -Message "Re-Installing $Name with correct version $versionToInstall"
-                    InstallPackage -pName $Name -pParams $Params -pVersion $versionToInstall -pSource $Source -cParams $chocoParams
+                    # Version check on the existing package to ensure we don't attempt to upgrade in a downgrade situation
+                    $installedPackages = @(Get-ChocoInstalledPackage | Where-object { $_.Name -eq $Name })
+                    $packageCount = $installedPackages.Count
+                    Write-Verbose "Found $packageCount matching package(s) for upgrade"
+                    $canUpgrade = $packageCount -eq 1
+                    if ($canUpgrade) {
+                        [Version] $installedVersion = Get-VersionCore -Version $installedPackages[0].Version
+                        [Version] $targetVersion = Get-VersionCore -Version $Version
+
+                        $canUpgrade = $installedVersion.CompareTo($targetVersion) -le 0
+                    }
+
+                    if ($canUpgrade) {
+                        Write-Verbose -Message "Upgrading $Name to version $Version"
+                        Upgrade-Package -pName $Name -pParams $Params -pVersion $Version
+                    }
+                    else {
+                        Write-Verbose -Message "Uninstalling $Name due to version mis-match"
+                        UninstallPackage -pName $Name -pParams $Params
+                        Write-Verbose -Message "Re-Installing $Name with correct version $version"
+                        InstallPackage -pName $Name -pParams $Params -pVersion $Version -pSource $Source -cParams $chocoParams
+                    }
                 }
                 elseif ($MinimumVersion) {
                     Write-Verbose -Message "Upgrading $Name because installed version is lower that the specified minimum"
@@ -443,7 +461,7 @@ function global:Write-Host
     Write-Verbose -Message $Object
 }
 
-Function Upgrade-Package {
+function Upgrade-Package {
     [Diagnostics.CodeAnalysis.SuppressMessage('PSUseApprovedVerbs','')]
     [Diagnostics.CodeAnalysis.SuppressMessage('PSAvoidUsingInvokeExpression','')]
     param(
@@ -454,7 +472,9 @@ Function Upgrade-Package {
         [Parameter(Position=2)]
         [string]$pSource,
         [Parameter(Position=3)]
-        [string]$cParams
+        [string]$cParams,
+        [Parameter(Position=4)]
+        [string]$pVersion
     )
 
     $env:Path = [Environment]::GetEnvironmentVariable('Path','Machine')
@@ -463,6 +483,9 @@ Function Upgrade-Package {
     [string]$chocoParams = '-dv -y'
     if ($pParams) {
         $chocoParams += " --params=`"$pParams`""
+    }
+    if ($pVersion) {
+        $chocoParams += " --version=`"$pVersion`""
     }
     if ($pSource) {
         $chocoParams += " --source=`"$pSource`""
@@ -548,6 +571,20 @@ function Get-ChocoVersion {
         }
     }
     Return $res
+}
+
+function Get-VersionCore {
+    [CmdletBinding()]
+    param (
+        [string]$Version
+    )
+
+    [Version] $versionCore = $null
+    if ($Version -match '(?<Major>[1-9]\d*)(\.(?<Minor>[0-9]*))?(\.(?<Patch>[0-9]*))?(\.(?<Segment>[0-9]*))?([-+].*)?') {
+        $versionCore = New-Object System.Version($Matches.Major, $Matches.Minor, $Matches.Patch, $Matches.Segment)
+    }
+
+    $versionCore
 }
 
 Export-ModuleMember -Function *-TargetResource
