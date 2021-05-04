@@ -74,38 +74,29 @@ function Set-TargetResource
     )
     Write-Verbose "Start Set-TargetResource"
 
-	if($Ensure -eq "Present")
-	{
-		if($Credentials -eq $null)
-		{
-			if($priority -eq $null)
-			{
-				choco sources add -n"$name" -s"$source"
-			}
-			else
-			{
-				choco sources add -n"$name" -s"$source" --priority=$priority
-			}
-		}
-		else
-		{
-			$username = $Credentials.UserName
-			$password = $Credentials.GetNetworkCredential().Password
+    # Remove source if we'removing or updating it.
+    # If the source does not exists, this is a noop.
+    choco sources remove -n"$name"
 
-			if($priority -eq $null)
-			{
-				choco sources add -n"$name" -s"$source" -u="$username" -p="$password"
-			}
-			else
-			{
-				choco sources add -n"$name" -s"$source" -u="$username" -p="$password" --priority=$priority
-			}
-		}
-	}
-	else
-	{
-		choco sources remove -n"$name"
-	}
+    if($Ensure -eq "Present")
+    {
+        $args = @("sources", "add", "-n`"$name`"", "-s`"$source`"")
+
+        if($null -ne $priority)
+        {
+            $args += "--priority=$priority"
+        }
+
+        if($null -ne $Credentials)
+        {
+            $username = $Credentials.UserName
+            $password = $Credentials.GetNetworkCredential().Password
+
+            $args += @("-u=`"$username`"", "-p=`"$password`"")
+        }
+
+        & choco $args
+    }
 }
 
 function Test-TargetResource
@@ -134,53 +125,57 @@ function Test-TargetResource
 
     Write-Verbose "Start Test-TargetResource"
 
-	if($env:ChocolateyInstall -eq "" -or $env:ChocolateyInstall -eq $null)
-	{
-		$exe = (get-command choco).Source
-		$chocofolder = $exe.Substring(0,$exe.LastIndexOf("\"))
+    if($env:ChocolateyInstall -eq "" -or $null -eq $env:ChocolateyInstall)
+    {
+        $exe = (get-command choco).Source
+        $chocofolder = $exe.Substring(0,$exe.LastIndexOf("\"))
 
-		if( $chocofolder.EndsWith("bin") )
-		{
-			$chocofolder = $chocofolder.Substring(0,$chocofolder.LastIndexOf("\"))
-		}
-	}
-	else
-	{
-		$chocofolder = $env:ChocolateyInstall
-	}
-	$configfolder = "$chocofolder\config"
-	$configfile = Get-ChildItem $configfolder | Where-Object {$_.Name -match "chocolatey.config$"}
+        if( $chocofolder.EndsWith("bin") )
+        {
+            $chocofolder = $chocofolder.Substring(0,$chocofolder.LastIndexOf("\"))
+        }
+    }
+    else
+    {
+        $chocofolder = $env:ChocolateyInstall
+    }
+    $configfolder = "$chocofolder\config"
+    $configfile = Get-ChildItem $configfolder | Where-Object {$_.Name -match "chocolatey.config$"}
 
-	$xml = [xml](Get-Content $configfile.FullName)
-	$sources = $xml.chocolatey.sources.source
+    $xml = [xml](Get-Content $configfile.FullName)
+    $sources = $xml.chocolatey.sources.source
 
-	foreach($chocosource in $sources)
-	{
-		if($chocosource.id -eq $name -and $ensure -eq 'Present')
-		{
-            if ($chocosource.priority -eq $Priority)
+    foreach($chocosource in $sources)
+    {
+        if($chocosource.id -eq $name -and $ensure -eq 'Present')
+        {
+            $configMatches = $true
+            if ($chocosource.value -ne $Source)
             {
-                return $true
+                $configMatches = $false
             }
-            else
-            {
-                return $false
-            }
-		}
-		elseif($chocosource.id -eq $name -and $ensure -eq 'Absent')
-		{
-			return $false
-		}
-	}
 
-	if($Ensure -eq 'Present')
-	{
-		return $false
-	}
-	else
-	{
-		return $true
-	}
+            if ($chocosource.priority -ne $Priority)
+            {
+                $configMatches = $false
+            }
+
+            return $configMatches
+        }
+        elseif($chocosource.id -eq $name -and $ensure -eq 'Absent')
+        {
+            return $false
+        }
+    }
+
+    if($Ensure -eq 'Present')
+    {
+        return $false
+    }
+    else
+    {
+        return $true
+    }
 }
 
 
