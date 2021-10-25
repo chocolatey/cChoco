@@ -1,3 +1,4 @@
+#requires -RunAsAdministrator
 # Copyright (c) 2017 Chocolatey Software, Inc.
 # Copyright (c) 2013 - 2017 Lawrence Gripper & original authors/contributors from https://github.com/chocolatey/cChoco
 #
