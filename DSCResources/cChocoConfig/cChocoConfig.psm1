@@ -92,12 +92,11 @@ function Set-TargetResource
             choco config unset --name "'$ConfigName'"
         }
     }
-
 }
 
 <#
 .Description
-Performs the test for cChocoFeature.
+Performs the test for cChocoConfig.
 
 .Example
 Test-TargetResource -ConfigName cacheLocation -Ensure 'Present' -Value 'c:\temp\choco'
