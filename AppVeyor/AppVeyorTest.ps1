@@ -23,12 +23,27 @@ Write-Host "Current working directory: $pwd"
 # Run Pester Tests                #
 #---------------------------------#
 $resultsFile = '.\TestsResults.xml'
-$testFiles   = Get-ChildItem "$pwd\tests" | Where-Object {$_.FullName -match 'Tests.ps1$'} | Select-Object -ExpandProperty FullName
-$results     = Invoke-Pester -Script $testFiles -OutputFormat NUnitXml -OutputFile $resultsFile -PassThru
+$PesterConfiguration = New-PesterConfiguration @{
+  Run = @{
+    Path     = "$PSScriptRoot\..\tests"
+    PassThru = $true
+  }
+  TestResult = @{
+    Enabled = $true
+    OutputFormat = "NUnitXml"
+    OutputPath = $resultsFile
+  }
+  Output = @{
+    Verbosity = "Detailed"
+  }
+}
+$results = Invoke-Pester -Configuration $PesterConfiguration
 
 Write-Host 'Uploading results'
 try {
-  (New-Object 'System.Net.WebClient').UploadFile("https://ci.appveyor.com/api/testresults/nunit/$($env:APPVEYOR_JOB_ID)", (Resolve-Path $resultsFile))
+  if ($env:APPVEYOR_JOB_ID) {
+    (New-Object 'System.Net.WebClient').UploadFile("https://ci.appveyor.com/api/testresults/nunit/$($env:APPVEYOR_JOB_ID)", (Resolve-Path $resultsFile))
+  }
 } catch {
   throw "Upload failed."
 }

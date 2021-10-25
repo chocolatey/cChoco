@@ -13,33 +13,40 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-#---------------------------------#
-# PSScriptAnalyzer tests          #
-#---------------------------------#
-$Rules   = Get-ScriptAnalyzerRule
+Describe "Testing cChoco DSC Resources against PSScriptAnalyzer rule-set" {
+  #---------------------------------#
+  # PSScriptAnalyzer tests          #
+  #---------------------------------#
+  BeforeDiscovery {
+    $Rules   = Get-ScriptAnalyzerRule
 
-#Only run on cChocoInstaller.psm1 for now as this is the only resource that has had code adjustments for PSScriptAnalyzer rules.
-$Modules = Get-ChildItem “$PSScriptRoot\..\” -Filter ‘*.psm1’ -Recurse | Where-Object {$_.FullName -match '(cChocoInstaller|cChocoPackageInstall|cChocoFeature)\.psm1$'}
+    # Only run on these for now as they are the only resources that have had code adjustments for PSScriptAnalyzer rules.
+    $Modules = Get-ChildItem “$PSScriptRoot\..\DSCResources” -Filter ‘*.psm1’ -Recurse | Where-Object {$_.Name -match '(cChocoInstaller|cChocoPackageInstall|cChocoFeature)\.psm1$'} | ForEach-Object {
+      @{
+        ModuleName = $_.BaseName
+        ModulePath = $_.FullName
+        RuleNames  = $Rules.RuleName
+      }
+    }
+  }
 
-#---------------------------------#
-# Run Module tests (psm1)         #
-#---------------------------------#
-if ($Modules.count -gt 0) {
-  Describe ‘Testing all Modules against default PSScriptAnalyzer rule-set’ {
-    foreach ($module in $modules) {
-      Context “Testing Module '$($module.FullName)'” {
-        foreach ($rule in $rules) {
-          It “passes the PSScriptAnalyzer Rule $rule“ {
-            $Failures = Invoke-ScriptAnalyzer -Path $module.FullName -IncludeRule $rule.RuleName
-            $FailuresCount = ($Failures | Measure-Object).Count
-            if ($FailuresCount -gt 0) {
-              $Failures | ForEach-Object {
-                Write-Warning "Script: $($_.ScriptName), Line $($_.Line), Message $($_.Message)"
-              }
-            }
-            $FailuresCount | Should Be 0
-          }
-        }
+  #---------------------------------#
+  # Run Module tests (psm1)         #
+  #---------------------------------#
+  Describe ‘Testing <ModuleName> against default PSScriptAnalyzer rules’ -ForEach $Modules {
+    BeforeAll {
+      $Failures = Invoke-ScriptAnalyzer -Path $ModulePath -IncludeRule $RuleNames
+    }
+    It "Passes '<_>'" -ForEach $RuleNames {
+      ($RuleFailures = $Failures | Where-Object RuleName -eq $_).ForEach{
+        throw (
+          [Management.Automation.ErrorRecord]::new(
+            ([Exception]::new(($RuleFailures.ForEach{$_.ScriptName + ":" + $_.Line + " " + $_.Message} -join "`n"))),
+            "ScriptAnalyzerViolation",
+            "SyntaxError",
+            $RuleFailures
+          )
+        )
       }
     }
   }

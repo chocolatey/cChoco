@@ -13,74 +13,87 @@
 # limitations under the License.
 
 
-$ResourceName = ((Split-Path $MyInvocation.MyCommand.Path -Leaf) -split '_')[0]
-$ResourceFile = (Get-DscResource -Name $ResourceName).Path
-
-$TestsPath    = (split-path -path $MyInvocation.MyCommand.Path -Parent)
-$ResourceFile = Get-ChildItem -Recurse $TestsPath\.. -File | Where-Object {$_.name -eq "$ResourceName.psm1"}
-
-Import-Module -Name $ResourceFile.FullName
-
-
 #---------------------------------#
 # Pester tests for cChocoInstall  #
 #---------------------------------#
 Describe "Testing cChocoFeature" {
+    BeforeAll {
+        $ModuleUnderTest = "cChocoFeature"
+
+        Import-Module $PSScriptRoot\..\DSCResources\$($ModuleUnderTest)\$($ModuleUnderTest).psm1 -Force
+
+        if (-not (Get-Command choco -ErrorAction SilentlyContinue)) {
+            function global:choco {}
+        }
+    }
+    
+    AfterAll {
+        Remove-Module $ModuleUnderTest
+    }
 
     Context "Test-TargetResource" {
-
-        mock -ModuleName cChocoFeature -CommandName Get-ChocoFeature -MockWith {
-            @([pscustomobject]@{
-                Name = "allowGlobalConfirmation"
-                State = "Enabled"
-                Description = "blah"
-            },
-            [pscustomobject]@{
-                Name = "powershellhost"
-                State = "Disabled"
-                Description = "blah"
-            } )| Where-Object { $_.Name -eq $FeatureName }
-        } -Verifiable
-
-
-        it 'Test-TargetResource returns true when Present and Enabled.' {
-            Test-TargetResource -FeatureName 'allowGlobalConfirmation' -Ensure 'Present' | should be $true
+        BeforeAll {
+            Mock -CommandName Get-ChocoFeature -ModuleName $ModuleUnderTest -MockWith {
+                @([pscustomobject]@{
+                    Name = "allowGlobalConfirmation"
+                    State = "Enabled"
+                    Description = "blah"
+                },
+                [pscustomobject]@{
+                    Name = "powershellhost"
+                    State = "Disabled"
+                    Description = "blah"
+                } ) | Where-Object { $_.Name -eq $FeatureName }
+            } -Verifiable
         }
 
-        it 'Test-TargetResource returns false when Present and Disabled' {
-            Test-TargetResource -FeatureName 'powershellhost' -Ensure 'Present' | should be $false
+        It 'Test-TargetResource returns true when Present and Enabled.' {
+            Test-TargetResource -FeatureName 'allowGlobalConfirmation' -Ensure 'Present' | Should -Be $true
         }
 
-        it 'Test-TargetResource returns false when Absent and Enabled' {
-            Test-TargetResource -FeatureName 'allowGlobalConfirmation' -Ensure 'Absent' | Should be $false
+        It 'Test-TargetResource returns false when Present and Disabled' {
+            Test-TargetResource -FeatureName 'powershellhost' -Ensure 'Present' | Should -Be $false
         }
 
-        it 'Test-TargetResource returns true when Absent and Disabled' {
-            Test-TargetResource -FeatureName 'powershellhost' -Ensure 'Absent' | should be $true
+        It 'Test-TargetResource returns false when Absent and Enabled' {
+            Test-TargetResource -FeatureName 'allowGlobalConfirmation' -Ensure 'Absent' | Should -Be $false
         }
 
+        It 'Test-TargetResource returns true when Absent and Disabled' {
+            Test-TargetResource -FeatureName 'powershellhost' -Ensure 'Absent' | Should -Be $true
+        }
     }
 
     Context "Set-TargetResource" {
-
-        InModuleScope -ModuleName cChocoFeature -ScriptBlock {
-            function choco {}
-            mock choco {} 
+        BeforeAll {
+            Mock choco -ModuleName $ModuleUnderTest
         }
 
-        Set-TargetResource -FeatureName "TestFeature" -Ensure "Present"
+        Context "Enabling a Feature" {
+            BeforeAll {
+                Set-TargetResource -FeatureName "TestFeature" -Ensure "Present"
+            }
 
-        it "Present - Should have called choco, with enable" { 
-            Assert-MockCalled -CommandName choco -ModuleName cChocoFeature -ParameterFilter {
-                $args -contains "enable"
+            It "Present - Should have called choco, with enable, and the specified FeatureName" { 
+                Assert-MockCalled choco -ModuleName cChocoFeature -ParameterFilter {
+                    $args[0] -eq "feature" -and
+                    $args[1] -eq "enable" -and
+                    $args -contains "TestFeature"
+                } -Scope Context
             }
         }
 
-        Set-TargetResource -FeatureName "TestFeature" -Ensure "Absent"
+        Context "Disabling a Feature" {
+            BeforeAll {
+                Set-TargetResource -FeatureName "TestFeature" -Ensure "Absent"
+            }
 
-        it "Absent - Should have called choco, with disable" {
-            Assert-MockCalled -CommandName choco -ModuleName cChocoFeature -ParameterFilter {
-                $args -contains "disable"
+            It "Absent - Should have called choco, with disable, and the specified FeatureName" {
+                Assert-MockCalled choco -ModuleName cChocoFeature -ParameterFilter {
+                    $args[0] -eq "feature" -and
+                    $args[1] -eq "disable" -and
+                    $args -contains "TestFeature"
+                } -Scope Context
             }
         }
     }

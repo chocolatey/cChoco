@@ -16,13 +16,24 @@
 #---------------------------------#
 # Pester tests for cChocoInstall  #
 #---------------------------------#
-$ResourceName = ((Split-Path $MyInvocation.MyCommand.Path -Leaf) -split '_')[0]
-$ResourceFile = (Get-DscResource -Name $ResourceName).Path
+Describe "Testing cChocoInstaller" {
+  BeforeAll {
+    $ModuleUnderTest = "cChocoInstaller"
 
-Describe "Testing $ResourceName loaded from $ResourceFile" {
+    Import-Module $PSScriptRoot\..\DSCResources\$($ModuleUnderTest)\$($ModuleUnderTest).psm1 -Force
+
+    if (-not (Get-Command choco -ErrorAction SilentlyContinue)) {
+      function global:choco {}
+    }
+  }
+  
+  AfterAll {
+    Remove-Module $ModuleUnderTest
+  }
+
   Context “Testing 'Get-TargetResource'” {
     It 'DummyTest $true should be $true' {
-      $true | Should Be $true
+      $true | Should -Be $true
     }
   }
 }
