@@ -161,6 +161,68 @@ Describe -Name "Testing $ResourceName loaded from $ResourceFile" -Fixture {
         }
     }
 
+    Context -Name "Package cannot be found" -Fixture {
+        $Scenario1 = @{
+            Name = 'NonExistentPackage'
+            Ensure = 'Present'
+        }
+
+        It -name "Set-TargeResource -ensure 'present' should throw" -test {
+            { Set-TargetResource @Scenario1 } | Should throw "Error: Chocolatey command failed with exit code 1"
+        }
+    }
+
+    Context -Name "Choco exit code validation" -Fixture {
+        BeforeEach {
+            $global:DSCMachineStatus = $null
+        }
+
+        $Scenario = @{
+            Name    = 'NonExistentPackage'
+            Ensure  = 'Present'
+        }
+
+        It -name "Install package successfully" -test {
+            Mock -CommandName 'Invoke-ChocoProcess' -ModuleName 'cChocoPackageInstall' -MockWith { return [hashtable]@{ 'exitCode' = 0 ; 'output' = "command`noutput" } }
+            Set-TargetResource @Scenario | Should Be $true
+            $global:DSCMachineStatus | Should Be $null
+        }
+
+        It -name "Package installation fails with exit code -1" -test {
+            Mock -CommandName 'Invoke-ChocoProcess' -ModuleName 'cChocoPackageInstall' -MockWith { return [hashtable]@{ 'exitCode' = -1 ; 'output' = "command`noutput" } }
+            { Set-TargetResource @Scenario } | Should -Throw "Error: Chocolatey command failed with exit code -1.`ncommand`noutput"
+        }
+
+        It -name "Package installation fails with exit code 350 (pending reboot)" -test {
+            Mock -CommandName 'Invoke-ChocoProcess' -ModuleName 'cChocoPackageInstall' -MockWith { return [hashtable]@{ 'exitCode' = 350 ; 'output' = "command`noutput" } }
+            { Set-TargetResource @Scenario } | Should -Throw "Error: Chocolatey detected a pending reboot from a previous installation. You can modify your DSC and use the PendingReboot DSC resource to reboot before running this command."
+        }
+
+        It -name "Package installation fails with exit code 1605 (MSI uninstall - product not found)" -test {
+            Mock -CommandName 'Invoke-ChocoProcess' -ModuleName 'cChocoPackageInstall' -MockWith { return [hashtable]@{ 'exitCode' = 1605 ; 'output' = "command`noutput" } }
+            Set-TargetResource @Scenario | Should Be $true
+            $global:DSCMachineStatus | Should Be $null
+        }
+
+        It -name "Package installation fails with exit code 1614 (MSI uninstall - product is uninstalled)" -test {
+            Mock -CommandName 'Invoke-ChocoProcess' -ModuleName 'cChocoPackageInstall' -MockWith { return [hashtable]@{ 'exitCode' = 1614 ; 'output' = "command`noutput" } }
+            Set-TargetResource @Scenario | Should Be $true
+            $global:DSCMachineStatus | Should Be $null
+        }
+
+        It -name "Package installation fails with exit code 1641 (MSI uninstall - restart initiated)" -test {
+            Mock -CommandName 'Invoke-ChocoProcess' -ModuleName 'cChocoPackageInstall' -MockWith { return [hashtable]@{ 'exitCode' = 1641 ; 'output' = "command`noutput" } }
+            Set-TargetResource @Scenario | Should Be $true
+            $global:DSCMachineStatus | Should Be 1
+        }
+
+        It -name "Package installation fails with exit code 3010 (MSI InnoSetup - restart initiated)" -test {
+            Mock -CommandName 'Invoke-ChocoProcess' -ModuleName 'cChocoPackageInstall' -MockWith { return [hashtable]@{ 'exitCode' = 3010 ; 'output' = "command`noutput" } }
+            Set-TargetResource @Scenario | Should Be $true
+            $global:DSCMachineStatus | Should Be 1
+        }
+    }
+
     Context -Name "Package is installed with prerelease version 1.0.0-1" -Fixture {
         Mock -CommandName 'Get-ChocoInstalledPackage' -ModuleName 'cChocoPackageInstall' -MockWith {
             return [pscustomobject]@{

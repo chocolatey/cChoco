@@ -219,6 +219,7 @@ function Test-TargetResource
 
     Return $result
 }
+
 function Test-ChocoInstalled
 {
     Write-Verbose -Message 'Test-ChocoInstalled'
@@ -254,7 +255,6 @@ Function Test-Command
 
 function InstallPackage
 {
-    [Diagnostics.CodeAnalysis.SuppressMessage('PSAvoidUsingInvokeExpression','')]
     param(
         [Parameter(Position=0,Mandatory)]
         [string]$pName,
@@ -288,9 +288,9 @@ function InstallPackage
         $chocoParams += " --no-progress"
     }
 
-    $cmd = "choco install $pName $chocoParams"
-    Write-Verbose -Message "Install command: '$cmd'"
-    $packageInstallOuput = Invoke-Expression -Command $cmd
+    $cmd = "install $pName $chocoParams"
+    Write-Verbose -Message "Install command: 'choco $cmd'"
+    $packageInstallOuput = Invoke-Chocolatey $cmd
     Write-Verbose -Message "Package output $packageInstallOuput"
 
     # Clear Package Cache
@@ -302,7 +302,6 @@ function InstallPackage
 
 function UninstallPackage
 {
-    [Diagnostics.CodeAnalysis.SuppressMessage('PSAvoidUsingInvokeExpression','')]
     param(
         [Parameter(Position=0,Mandatory)]
         [string]$pName,
@@ -324,9 +323,9 @@ function UninstallPackage
         $chocoParams += " --no-progress"
     }
 
-    $cmd = "choco uninstall $pName $chocoParams"
-    Write-Verbose -Message "Uninstalling $pName with: '$cmd'"
-    $packageUninstallOuput = Invoke-Expression -Command $cmd
+    $cmd = "uninstall $pName $chocoParams"
+    Write-Verbose -Message "Uninstalling $pName with: 'choco $cmd'"
+    $packageUninstallOuput = Invoke-Chocolatey -Command $cmd
 
     Write-Verbose -Message "Package uninstall output $packageUninstallOuput "
 
@@ -397,7 +396,6 @@ function IsPackageInstalled
 }
 
 Function Test-LatestVersionInstalled {
-    [Diagnostics.CodeAnalysis.SuppressMessage('PSAvoidUsingInvokeExpression','')]
     param(
         [Parameter(Mandatory)]
         [string]$pName,
@@ -410,10 +408,10 @@ Function Test-LatestVersionInstalled {
         $chocoParams += " --source=`"$pSource`""
     }
 
-    $cmd = "choco upgrade $pName $chocoParams"
-    Write-Verbose -Message "Testing if $pName can be upgraded: '$cmd'"
+    $cmd = "upgrade $pName $chocoParams"
+    Write-Verbose -Message "Testing if $pName can be upgraded: 'choco $cmd'"
 
-    $packageUpgradeOuput = Invoke-Expression -Command $cmd
+    $packageUpgradeOuput = Invoke-Chocolatey $cmd
     $packageUpgradeOuput | ForEach-Object {Write-Verbose -Message $_}
 
     if ($packageUpgradeOuput -match "$pName.*is the latest version available based on your source") {
@@ -445,7 +443,6 @@ function global:Write-Host
 
 Function Upgrade-Package {
     [Diagnostics.CodeAnalysis.SuppressMessage('PSUseApprovedVerbs','')]
-    [Diagnostics.CodeAnalysis.SuppressMessage('PSAvoidUsingInvokeExpression','')]
     param(
         [Parameter(Position=0,Mandatory)]
         [string]$pName,
@@ -475,15 +472,15 @@ Function Upgrade-Package {
         $chocoParams += " --no-progress"
     }
 
-    $cmd = "choco upgrade $pName $chocoParams"
-    Write-Verbose -Message "Upgrade command: '$cmd'"
+    $cmd = "upgrade $pName $chocoParams"
+    Write-Verbose -Message "Upgrade command: 'choco $cmd'"
 
     if (-not (IsPackageInstalled -pName $pName))
     {
         throw "$pName is not installed, you cannot upgrade"
     }
 
-    $packageUpgradeOuput = Invoke-Expression -Command $cmd
+    $packageUpgradeOuput = Invoke-Chocolatey $cmd
     $packageUpgradeOuput | ForEach-Object { Write-Verbose -Message $_ }
 
     # Clear Package Cache
@@ -519,6 +516,119 @@ function Get-ChocoInstalledPackage {
     }
 
     Return $res
+}
+
+<#
+.Synopsis
+   Run Chocolatey executable and throws error on failure
+.DESCRIPTION
+   Run Chocolatey executable and throws error on failure
+.EXAMPLE
+   Invoke-Chocolatey "list -lo"
+.EXAMPLE
+   Invoke-Chocolatey -arguments "list -lo"
+#>
+function Invoke-Chocolatey {
+    [CmdletBinding()]
+    Param
+    (
+        # Chocolatey arguments."
+        [Parameter(Position = 0)]
+        [string]$arguments
+    )
+
+    $result = Invoke-ChocoProcess -arguments $arguments
+
+    #exit codes reference: https://docs.chocolatey.org/en-us/choco/commands/install#exit-codes
+    switch ($result.exitcode) {
+        0 {
+            #most widely used success exit code
+            $result.output.Split("`n")
+            break
+        }
+        350 {
+            # pending reboot detected, no action has occurred
+            $result.output.Split("`n")
+            throw "Error: Chocolatey detected a pending reboot from a previous installation. You can modify your DSC and use the PendingReboot DSC resource to reboot before running this command."
+            break
+        }
+        1605 {
+            #(MSI uninstall) - the product is not found, could have already been uninstalled
+            $result.output.Split("`n")
+            break
+        }
+        1614 {
+            #(MSI uninstall) - the product is uninstalled
+            $result.output.Split("`n")
+            break
+        }
+        1641 {
+            #(MSI) - restart initiated
+            $result.output.Split("`n")
+            Request-DscReboot
+            break
+        }
+        3010 {
+            #(MSI, InnoSetup can be passed to provide this) - restart required
+            $result.output.Split("`n")
+            Request-DscReboot
+            break
+        }
+        default {
+            #when error, throw output as error, contains errormessage
+            throw "Error: Chocolatey command failed with exit code $($result.exitcode).`n$($result.output)" 
+        }
+    }
+}
+
+function Invoke-ChocoProcess {
+    [CmdletBinding()]
+    [OutputType([hashtable])]
+    Param
+    (
+        # Chocolatey arguments."
+        [Parameter(Position = 0)]
+        [string]$arguments
+    )
+
+    Write-Verbose -Message "command: 'choco $arguments'"
+
+    $pinfo = New-Object System.Diagnostics.ProcessStartInfo
+    $pinfo.FileName = 'choco'
+    $pinfo.RedirectStandardError = $true
+    $pinfo.RedirectStandardOutput = $true
+    $pinfo.UseShellExecute = $false
+    $pinfo.Arguments = "$arguments"
+
+    $p = New-Object System.Diagnostics.Process
+    $p.StartInfo = $pinfo
+    $p.Start() | Out-Null
+
+    $output = $p.StandardOutput.ReadToEnd()
+    $p.WaitForExit()
+    $exitcode = $p.ExitCode
+    $p.Dispose()
+
+    #Set $LASTEXITCODE variable.
+    powershell.exe -NoLogo -NoProfile -Noninteractive "exit $exitcode"
+
+    return @{
+        exitCode = $exitcode
+        output = $output
+    }
+}
+
+function Request-DscReboot {
+    [Diagnostics.CodeAnalysis.SuppressMessage('PSAvoidGlobalVars','')]
+    [Diagnostics.CodeAnalysis.SuppressMessage('PSUseDeclaredVarsMoreThanAssignments','')]
+    [CmdletBinding()]
+    param()
+
+    # Setting the flag below allows LCM, if configured, to restart the node
+    # Reference: https://docs.microsoft.com/en-us/powershell/dsc/configurations/reboot-a-node?view=dsc-1.1
+
+    Write-Verbose "A reboot is required for this Chocolatey package"
+    $global:DSCMachineStatus = 1 # Signal to the LCM to reboot the node 
 }
 
 function Get-ChocoVersion {
