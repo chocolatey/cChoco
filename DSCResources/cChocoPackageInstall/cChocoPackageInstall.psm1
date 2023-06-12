@@ -507,8 +507,7 @@ function Get-ChocoInstalledPackage {
         if (Test-Path -Path $ChocoInstallList) {
             Write-Verbose "Purging old ChocoInstalled.xml file at $ChocoInstallList"
             Remove-Item $ChocoInstallList -Force
-        }
-        else {
+        } else {
             Write-Verbose "Did not locate ChocoInstalled.xml file to remove at $ChocoInstallList, taking no action"
         }
         $res = $true
