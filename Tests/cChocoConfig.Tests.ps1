@@ -21,7 +21,7 @@ Describe "Testing cChocoConfig" {
 
         Import-Module $PSScriptRoot\..\DSCResources\$($ModuleUnderTest)\$($ModuleUnderTest).psm1 -Force
 
-        if (-not $env:ChocolateyInstall -and -not (Test-Path $env:ChocolateyInstall -ErrorAction SilentlyContinue)) {
+        if (-not $env:ChocolateyInstall) {
             # Chocolatey doesn't need to be installed for these tests, but the resource tests for it
             $env:ChocolateyInstall = "C:\ProgramData\chocolatey"
         }
