@@ -16,6 +16,7 @@
 function Get-TargetResource
 {
     [OutputType([hashtable])]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSReviewUnusedParameter", "InstallDir")]
     param
     (
         [parameter(Mandatory)]
@@ -61,6 +62,7 @@ function Set-TargetResource
 function Test-TargetResource
 {
     [OutputType([bool])]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSReviewUnusedParameter", "ChocoInstallScriptUrl")]
     param
     (
         [parameter(Mandatory)]
@@ -124,6 +126,10 @@ Function Test-Command
 #region - chocolately installer work arounds. Main issue is use of write-host
 function global:Write-Host
 {
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSAvoidGlobalFunctions", "")]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSReviewUnusedParameter", "NoNewLine")]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSReviewUnusedParameter", "ForegroundColor")]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSReviewUnusedParameter", "BackgroundColor")]
     Param(
         [Parameter(Mandatory,Position = 0)]
         $Object,
