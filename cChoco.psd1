@@ -8,5 +8,5 @@
 	CLRVersion        = "4.0";
 	CmdletsToExport   = "*";
 	Author            = "Chocolatey Software, Lawrence Gripper, Javy de Koning";
-	ModuleVersion     = "2.5.0.0"
+	ModuleVersion     = "2.6.0.0"
 }
