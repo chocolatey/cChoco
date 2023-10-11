@@ -16,6 +16,7 @@
 function Get-TargetResource
 {
     [OutputType([hashtable])]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSReviewUnusedParameter", "MinimumVersion")]
     param
     (
         [parameter(Mandatory)]
@@ -433,7 +434,11 @@ Function Test-LatestVersionInstalled {
 ##attempting to work around the issues with Chocolatey calling Write-host in its scripts.
 function global:Write-Host
 {
-    Param(
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSAvoidGlobalFunctions", "")]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSReviewUnusedParameter", "NoNewLine")]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSReviewUnusedParameter", "ForegroundColor")]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSReviewUnusedParameter", "BackgroundColor")]
+    param(
         [Parameter(Mandatory, Position = 0)]
         [Object]
         $Object,
@@ -443,7 +448,6 @@ function global:Write-Host
         $ForegroundColor,
         [ConsoleColor]
         $BackgroundColor
-
     )
 
     #Override default Write-Host...
@@ -539,6 +543,7 @@ function Get-ChocoInstalledPackage {
 }
 
 function Get-ChocoVersion {
+    [OutputType([System.Version])]
     [CmdletBinding()]
     param (
         [switch]$Purge,
@@ -566,10 +571,12 @@ function Get-ChocoVersion {
         } else {
             $cmd = choco -v
             $res = [System.Version]($cmd.Split('-')[0])
-            $res | Export-Clixml -Path $chocoVersion
+            if (-not $NoCache) {
+                $res | Export-Clixml -Path $chocoVersion
+            }
         }
     }
-    Return $res
+    return $res
 }
 
 Export-ModuleMember -Function *-TargetResource

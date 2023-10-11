@@ -16,6 +16,7 @@
 function Get-TargetResource
 {
     [OutputType([hashtable])]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSReviewUnusedParameter", "InstallDir")]
     param
     (
         [parameter(Mandatory)]
@@ -61,6 +62,7 @@ function Set-TargetResource
 function Test-TargetResource
 {
     [OutputType([bool])]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSReviewUnusedParameter", "ChocoInstallScriptUrl")]
     param
     (
         [parameter(Mandatory)]
@@ -124,6 +126,10 @@ Function Test-Command
 #region - chocolately installer work arounds. Main issue is use of write-host
 function global:Write-Host
 {
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSAvoidGlobalFunctions", "")]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSReviewUnusedParameter", "NoNewLine")]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSReviewUnusedParameter", "ForegroundColor")]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSReviewUnusedParameter", "BackgroundColor")]
     Param(
         [Parameter(Mandatory,Position = 0)]
         $Object,
@@ -176,12 +182,6 @@ Function Install-Chocolatey {
         $ChocoInstallScriptUrl = 'https://chocolatey.org/install.ps1'
     )
     Write-Verbose 'Install-Chocolatey'
-
-    #Create install directory if it does not exist
-    If(-not (Test-Path -Path $InstallDir)) {
-        Write-Verbose "[ChocoInstaller] Creating $InstallDir"
-        New-Item -Path $InstallDir -ItemType Directory
-    }
 
     #Set permanent EnvironmentVariable
     Write-Verbose 'Setting ChocolateyInstall environment variables'

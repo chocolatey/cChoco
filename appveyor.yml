@@ -1,7 +1,7 @@
 #---------------------------------#
 #      environment configuration  #
 #---------------------------------#
-version: 2.5.0.{build}
+version: 2.6.0.{build}
 os: WMF 5
 install:
   - ps: . .\AppVeyor\AppVeyorInstall.ps1
