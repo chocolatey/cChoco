@@ -291,8 +291,15 @@ function InstallPackage
 
     $cmd = "choco install $pName $chocoParams"
     Write-Verbose -Message "Install command: '$cmd'"
-    $packageInstallOuput = Invoke-Expression -Command $cmd
-    Write-Verbose -Message "Package output $packageInstallOuput"
+
+    $currentProgressPreference = $ProgressPreference
+    $ProgressPreference = 'SilentlyContinue'
+
+    $packageInstallOutput = Invoke-Expression -Command $cmd
+
+    $ProgressPreference = $currentProgressPreference
+
+    Write-Verbose -Message "Package output $packageInstallOutput"
 
     # Clear Package Cache
     Get-ChocoInstalledPackage -Purge
@@ -487,8 +494,13 @@ Function Upgrade-Package {
         throw "$pName is not installed, you cannot upgrade"
     }
 
+    $currentProgressPreference = $ProgressPreference
+    $ProgressPreference = 'SilentlyContinue'
+
     $packageUpgradeOuput = Invoke-Expression -Command $cmd
     $packageUpgradeOuput | ForEach-Object { Write-Verbose -Message $_ }
+
+    $ProgressPreference = $currentProgressPreference
 
     # Clear Package Cache
     Get-ChocoInstalledPackage -Purge
@@ -500,6 +512,11 @@ function Get-ChocoInstalledPackage {
         [switch]$Purge,
         [switch]$NoCache
     )
+
+    if ([string]::IsNullOrEmpty($env:ChocolateyInstall))
+    {
+        $env:ChocolateyInstall = [environment]::GetEnvironmentVariable('ChocolateyInstall', 'Machine')
+    }
 
     $ChocoInstallLP = Join-Path -Path $env:ChocolateyInstall -ChildPath 'cache'
     if ( -not (Test-Path $ChocoInstallLP)){
@@ -532,6 +549,12 @@ function Get-ChocoVersion {
         [switch]$Purge,
         [switch]$NoCache
     )
+
+    if ([string]::IsNullOrEmpty($env:ChocolateyInstall))
+    {
+        $env:ChocolateyInstall = [environment]::GetEnvironmentVariable('ChocolateyInstall', 'Machine')
+    }
+
     $chocoInstallCache = Join-Path -Path $env:ChocolateyInstall -ChildPath 'cache'
     if ( -not (Test-Path $chocoInstallCache)){
         New-Item -Name 'cache' -Path $env:ChocolateyInstall -ItemType Directory | Out-Null
