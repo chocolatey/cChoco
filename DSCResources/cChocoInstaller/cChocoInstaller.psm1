@@ -155,11 +155,20 @@ function Get-FileDownload {
         [ValidateNotNullOrEmpty()]
         [string]$file
     )
+
     # Set security protocol preference to avoid the download error if the machine has disabled TLS 1.0 and SSLv3
     # See: https://chocolatey.org/install (Installing With Restricted TLS section)
-    # Since cChoco requires at least PowerShell 4.0, we have .NET 4.5 available, so we can use [System.Net.SecurityProtocolType] enum values by name.
+    # Since cChoco requires at least PowerShell 4.0, we have .NET 4.5 available, so we can use 
+    # [System.Net.SecurityProtocolType] enum values by name.
     $securityProtocolSettingsOriginal = [System.Net.ServicePointManager]::SecurityProtocol
-    [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12 -bor [System.Net.SecurityProtocolType]::Tls11 -bor [System.Net.SecurityProtocolType]::Tls -bor [System.Net.SecurityProtocolType]::Ssl3
+
+    $tlsVersions = [enum]::GetValues('Net.SecurityProtocolType') | Where-Object { $_ -ge 'Tls' } # Include TLS versions by default
+    $tlsVersions.ForEach({[Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor $_})
+
+    # SSLv3 is deprecated in version 6+ so only enable it for earlier versions
+    if ($PSVersionTable.PSVersion.Major -lt 6) {
+        [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor [System.Net.SecurityProtocolType]::Ssl3    
+    }
 
     Write-Verbose "Downloading $url to $file"
     $downloader = new-object -TypeName System.Net.WebClient
