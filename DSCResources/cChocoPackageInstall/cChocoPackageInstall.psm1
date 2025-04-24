@@ -508,7 +508,9 @@ function Get-ChocoInstalledPackage {
     $ChocoInstallList = Join-Path -Path $ChocoInstallLP -ChildPath 'ChocoInstalled.xml'
 
     if ($Purge.IsPresent) {
-        Remove-Item $ChocoInstallList -Force
+        if (Test-Path $ChocoInstallList) {
+            Remove-Item $ChocoInstallList -Force
+        }
         $res = $true
     } else {
         $PackageCacheSec = (Get-Date).AddSeconds('-60')
