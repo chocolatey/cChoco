@@ -27,7 +27,8 @@ jobs:
       # Uncomment the following line if using a repository specific label file, also remove this comment line
       #      .github/labels.yml
           request-token: ${{ secrets.SYNC_TOKEN }} # Used when getting the config files.
-          delete-other-labels: false # After initial run, and verification change this to true
+          delete-other-labels: true # After initial run, and verification change this to true
           dry-run: false
           token: ${{ secrets.SYNC_TOKEN }} # Used when updating the labels on the repository.
+
 
