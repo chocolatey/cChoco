@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> The cChoco project will be archived and made read-only by June 30, 2026. See [issue #192](https://github.com/chocolatey/cChoco/issues/192) for more information.
+
 | Branch        | Status        |
 | ------------- | ------------- |
 | master        | [![Build status](https://ci.appveyor.com/api/projects/status/qma3jnh23w5vjt46/branch/master?svg=true&passingText=master%20-%20OK&pendingText=master%20-%20PENDING&failingText=master%20-%20FAILED)](https://ci.appveyor.com/project/LawrenceGripper/cchoco/branch/master) |
